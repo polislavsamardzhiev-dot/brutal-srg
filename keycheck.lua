@@ -2,7 +2,7 @@
 -- BrutalSRG Key System
 -- ============================================================
 
-local MAIN_URL = "https://raw.githubusercontent.com/YOUR_USERNAME/brutal-srg/main/main.lua"
+local MAIN_URL = "https://raw.githubusercontent.com/polislavsamardzhiev-dot/brutal-srg/refs/heads/main/keycheck.lua?token=GHSAT0AAAAAAEL5DQXLFQVD4GZAPPVFCQSS2WKB52A"
 
 -- Change this to whatever keys you want to accept:
 local VALID_KEYS = {
