@@ -51,8 +51,8 @@ local GameStructure = {
 local S = {
     BoxESP = false, SkeletonESP = false, Chams = false,
     UseTeamColors = true,
-    BoxColor = Color3.fromRGB(255, 50, 50),
-    SkeletonColor = Color3.fromRGB(255, 80, 80),
+    BoxColor = Color3.fromRGB(255, 30, 30),
+    SkeletonColor = Color3.fromRGB(255, 60, 60),
     ChamsColor = Color3.fromRGB(200, 0, 0),
     ChamsFillTransparency = 0.45,
 
@@ -108,7 +108,7 @@ local S = {
     IgnoreTeammates = true,
 
     Tracers = false,
-    TracerColor = Color3.fromRGB(255, 200, 0),
+    TracerColor = Color3.fromRGB(255, 60, 60),
     TracerLifetime = 6,
     TracerThickness = 2,
 
@@ -135,28 +135,28 @@ local Binds = {
 }
 
 -- ============================================================
--- THEME
+-- THEME  (RED + BLACK)
 -- ============================================================
 local Theme = {
-    -- Flat, no rounding, thin borders, monospace-ish feel
-    Bg           = Color3.fromRGB(14, 14, 15),
-    PanelBg      = Color3.fromRGB(18, 18, 20),
-    PanelBgAlt   = Color3.fromRGB(22, 22, 24),
-    RowBg        = Color3.fromRGB(24, 24, 26),
-    RowBgHover   = Color3.fromRGB(32, 32, 36),
-    Border       = Color3.fromRGB(38, 38, 42),
-    BorderBright = Color3.fromRGB(58, 58, 64),
-    Text         = Color3.fromRGB(210, 210, 214),
-    TextDim      = Color3.fromRGB(140, 140, 148),
-    TextBright   = Color3.fromRGB(240, 240, 245),
-    Accent       = Color3.fromRGB(190, 60, 60),
-    AccentDim    = Color3.fromRGB(90, 30, 30),
-    AccentBright = Color3.fromRGB(220, 90, 90),
-    On           = Color3.fromRGB(90, 170, 110),
-    Off          = Color3.fromRGB(150, 60, 60),
-    Danger       = Color3.fromRGB(180, 50, 50),
-    Ok           = Color3.fromRGB(80, 150, 90),
-    Warn         = Color3.fromRGB(180, 150, 60),
+    Bg           = Color3.fromRGB(8, 6, 6),
+    BgDeep       = Color3.fromRGB(4, 2, 2),
+    PanelBg      = Color3.fromRGB(16, 10, 10),
+    PanelBgAlt   = Color3.fromRGB(20, 12, 12),
+    RowBg        = Color3.fromRGB(24, 14, 14),
+    RowBgHover   = Color3.fromRGB(38, 20, 20),
+    Border       = Color3.fromRGB(48, 20, 20),
+    BorderBright = Color3.fromRGB(90, 25, 25),
+    Text         = Color3.fromRGB(230, 220, 220),
+    TextDim      = Color3.fromRGB(160, 130, 130),
+    TextBright   = Color3.fromRGB(255, 240, 240),
+    Accent       = Color3.fromRGB(220, 30, 40),
+    AccentBright = Color3.fromRGB(255, 60, 70),
+    AccentDim    = Color3.fromRGB(90, 15, 20),
+    On           = Color3.fromRGB(255, 40, 50),
+    Off          = Color3.fromRGB(100, 40, 45),
+    Danger       = Color3.fromRGB(230, 40, 40),
+    Ok           = Color3.fromRGB(80, 180, 100),
+    Warn         = Color3.fromRGB(230, 170, 50),
     Font         = Enum.Font.Code,
     FontBold     = Enum.Font.Code,
 }
@@ -443,61 +443,90 @@ local function stroke(parent, color, thickness)
     return s
 end
 
--- Root menu
+-- Root menu (bigger)
 local Menu = Instance.new("Frame")
 Menu.Name = "MainMenu"
-Menu.Size = UDim2.fromOffset(900, 690)
-Menu.Position = UDim2.fromScale(0.05, 0.11)
+Menu.Size = UDim2.fromOffset(1040, 760)
+Menu.Position = UDim2.fromScale(0.03, 0.08)
 Menu.BackgroundColor3 = Theme.Bg
 Menu.BorderSizePixel = 0
 Menu.Visible = false
 Menu.Active = true
+Menu.ClipsDescendants = true
 Menu.Parent = gui
-stroke(Menu, Theme.Border, 1)
+stroke(Menu, Theme.AccentDim, 2)
 
--- Top title bar
+-- Corner accent brackets
+local function cornerAccent(pos, size)
+    local f = Instance.new("Frame")
+    f.Size = size
+    f.Position = pos
+    f.BackgroundColor3 = Theme.Accent
+    f.BorderSizePixel = 0
+    f.ZIndex = 2
+    f.Parent = Menu
+end
+cornerAccent(UDim2.fromOffset(0, 0), UDim2.fromOffset(14, 2))
+cornerAccent(UDim2.fromOffset(0, 0), UDim2.fromOffset(2, 14))
+cornerAccent(UDim2.new(1, -14, 0, 0), UDim2.fromOffset(14, 2))
+cornerAccent(UDim2.new(1, -2, 0, 0), UDim2.fromOffset(2, 14))
+cornerAccent(UDim2.new(0, 0, 1, -2), UDim2.fromOffset(14, 2))
+cornerAccent(UDim2.new(0, 0, 1, -14), UDim2.fromOffset(2, 14))
+cornerAccent(UDim2.new(1, -14, 1, -2), UDim2.fromOffset(14, 2))
+cornerAccent(UDim2.new(1, -2, 1, -14), UDim2.fromOffset(2, 14))
+
+-- Title bar (bigger)
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 36)
-Title.BackgroundColor3 = Theme.PanelBg
+Title.Size = UDim2.new(1, 0, 0, 56)
+Title.BackgroundColor3 = Theme.BgDeep
 Title.BorderSizePixel = 0
-Title.Text = "BRUTAL SRG  //  v1.0"
-Title.TextColor3 = Theme.TextBright
+Title.Text = "BRUTAL SRG"
+Title.TextColor3 = Theme.AccentBright
 Title.Font = Theme.FontBold
-Title.TextSize = 14
+Title.TextSize = 22
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Menu
 local titlePad = Instance.new("UIPadding")
-titlePad.PaddingLeft = UDim.new(0, 14)
+titlePad.PaddingLeft = UDim.new(0, 20)
 titlePad.Parent = Title
-local titleStroke = stroke(Title, Theme.Border, 1)
 
--- Small accent stripe under title
+-- Accent line under title
 local TitleAccent = Instance.new("Frame")
-TitleAccent.Size = UDim2.new(1, 0, 0, 1)
-TitleAccent.Position = UDim2.fromOffset(0, 36)
+TitleAccent.Size = UDim2.new(1, 0, 0, 2)
+TitleAccent.Position = UDim2.fromOffset(0, 56)
 TitleAccent.BackgroundColor3 = Theme.Accent
 TitleAccent.BorderSizePixel = 0
 TitleAccent.Parent = Menu
 
--- Right-side label in title
+-- Right-side info label
 local TitleRight = Instance.new("TextLabel")
-TitleRight.Size = UDim2.fromOffset(200, 36)
-TitleRight.Position = UDim2.new(1, -214, 0, 0)
+TitleRight.Size = UDim2.fromOffset(360, 56)
+TitleRight.Position = UDim2.new(1, -380, 0, 0)
 TitleRight.BackgroundTransparency = 1
-TitleRight.Text = "INSERT TOGGLE   •   F9 CONSOLE"
+TitleRight.Text = "v1.0   |   INSERT TOGGLE   |   " .. EXECUTOR_NAME:upper()
 TitleRight.TextColor3 = Theme.TextDim
 TitleRight.Font = Theme.Font
-TitleRight.TextSize = 11
+TitleRight.TextSize = 12
 TitleRight.TextXAlignment = Enum.TextXAlignment.Right
 TitleRight.Parent = Title
 
+-- Small status dot on left of title
+local StatusDot = Instance.new("Frame")
+StatusDot.Size = UDim2.fromOffset(10, 10)
+StatusDot.Position = UDim2.new(0, 26, 0, 23)
+StatusDot.BackgroundColor3 = Theme.Accent
+StatusDot.BorderSizePixel = 0
+StatusDot.ZIndex = 3
+StatusDot.Parent = Title
+Instance.new("UICorner", StatusDot).CornerRadius = UDim.new(1, 0)
+
 makeDraggable(Menu, Title)
 
--- Tab bar
+-- Tab bar (taller)
 local TabBar = Instance.new("Frame")
-TabBar.Size = UDim2.new(1, 0, 0, 36)
-TabBar.Position = UDim2.fromOffset(0, 37)
-TabBar.BackgroundColor3 = Theme.PanelBgAlt
+TabBar.Size = UDim2.new(1, 0, 0, 48)
+TabBar.Position = UDim2.fromOffset(0, 58)
+TabBar.BackgroundColor3 = Theme.PanelBg
 TabBar.BorderSizePixel = 0
 TabBar.Parent = Menu
 stroke(TabBar, Theme.Border, 1)
@@ -509,8 +538,8 @@ TabLayout.Padding = UDim.new(0, 0)
 TabLayout.Parent = TabBar
 
 local ContentArea = Instance.new("Frame")
-ContentArea.Size = UDim2.new(1, 0, 1, -74)
-ContentArea.Position = UDim2.fromOffset(0, 74)
+ContentArea.Size = UDim2.new(1, 0, 1, -106)
+ContentArea.Position = UDim2.fromOffset(0, 106)
 ContentArea.BackgroundTransparency = 1
 ContentArea.Parent = Menu
 
@@ -518,23 +547,32 @@ local Tabs = {}
 
 local function createTab(name)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.fromOffset(96, 36)
-    btn.BackgroundColor3 = Theme.PanelBgAlt
-    btn.BackgroundTransparency = 0
+    btn.Size = UDim2.fromOffset(110, 48)
+    btn.BackgroundColor3 = Theme.PanelBg
     btn.TextColor3 = Theme.TextDim
     btn.Font = Theme.FontBold
-    btn.TextSize = 12
+    btn.TextSize = 13
     btn.Text = name
     btn.AutoButtonColor = false
     btn.Parent = TabBar
     local btnStroke = stroke(btn, Theme.Border, 1)
 
+    -- bottom accent indicator (starts invisible)
+    local indicator = Instance.new("Frame")
+    indicator.Size = UDim2.new(1, 0, 0, 3)
+    indicator.Position = UDim2.new(0, 0, 1, -3)
+    indicator.BackgroundColor3 = Theme.Accent
+    indicator.BorderSizePixel = 0
+    indicator.Visible = false
+    indicator.ZIndex = 3
+    indicator.Parent = btn
+
     local page = Instance.new("ScrollingFrame")
     page.Size = UDim2.new(1, 0, 1, 0)
     page.BackgroundColor3 = Theme.Bg
     page.BorderSizePixel = 0
-    page.ScrollBarThickness = 4
-    page.ScrollBarImageColor3 = Theme.BorderBright
+    page.ScrollBarThickness = 5
+    page.ScrollBarImageColor3 = Theme.Accent
     page.CanvasSize = UDim2.new(0, 0, 0, 0)
     page.AutomaticCanvasSize = Enum.AutomaticSize.Y
     page.Visible = false
@@ -542,14 +580,14 @@ local function createTab(name)
 
     local pageLayout = Instance.new("UIListLayout")
     pageLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    pageLayout.Padding = UDim.new(0, 4)
+    pageLayout.Padding = UDim.new(0, 6)
     pageLayout.Parent = page
 
     local pagePad = Instance.new("UIPadding")
-    pagePad.PaddingLeft = UDim.new(0, 10)
-    pagePad.PaddingRight = UDim.new(0, 10)
-    pagePad.PaddingTop = UDim.new(0, 10)
-    pagePad.PaddingBottom = UDim.new(0, 10)
+    pagePad.PaddingLeft = UDim.new(0, 16)
+    pagePad.PaddingRight = UDim.new(0, 16)
+    pagePad.PaddingTop = UDim.new(0, 14)
+    pagePad.PaddingBottom = UDim.new(0, 14)
     pagePad.Parent = page
 
     local function makeColumns()
@@ -562,29 +600,29 @@ local function createTab(name)
         local hLayout = Instance.new("UIListLayout")
         hLayout.FillDirection = Enum.FillDirection.Horizontal
         hLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        hLayout.Padding = UDim.new(0, 8)
+        hLayout.Padding = UDim.new(0, 12)
         hLayout.Parent = holder
 
         local left = Instance.new("Frame")
-        left.Size = UDim2.new(0.5, -4, 0, 0)
+        left.Size = UDim2.new(0.5, -6, 0, 0)
         left.AutomaticSize = Enum.AutomaticSize.Y
         left.BackgroundTransparency = 1
         left.LayoutOrder = 1
         left.Parent = holder
         local ll = Instance.new("UIListLayout")
         ll.SortOrder = Enum.SortOrder.LayoutOrder
-        ll.Padding = UDim.new(0, 4)
+        ll.Padding = UDim.new(0, 6)
         ll.Parent = left
 
         local right = Instance.new("Frame")
-        right.Size = UDim2.new(0.5, -4, 0, 0)
+        right.Size = UDim2.new(0.5, -6, 0, 0)
         right.AutomaticSize = Enum.AutomaticSize.Y
         right.BackgroundTransparency = 1
         right.LayoutOrder = 2
         right.Parent = holder
         local rl = Instance.new("UIListLayout")
         rl.SortOrder = Enum.SortOrder.LayoutOrder
-        rl.Padding = UDim.new(0, 4)
+        rl.Padding = UDim.new(0, 6)
         rl.Parent = right
 
         return left, right
@@ -593,25 +631,32 @@ local function createTab(name)
     btn.MouseButton1Click:Connect(function()
         for _, t in pairs(Tabs) do
             t.Page.Visible = false
-            t.Button.BackgroundColor3 = Theme.PanelBgAlt
+            t.Button.BackgroundColor3 = Theme.PanelBg
             t.Button.TextColor3 = Theme.TextDim
-            if t.Stroke then t.Stroke.Color = Theme.Border end
+            t.Stroke.Color = Theme.Border
+            t.Indicator.Visible = false
         end
         page.Visible = true
         btn.BackgroundColor3 = Theme.Bg
-        btn.TextColor3 = Theme.TextBright
+        btn.TextColor3 = Theme.AccentBright
         btnStroke.Color = Theme.Accent
+        indicator.Visible = true
     end)
 
-    -- Hover
     btn.MouseEnter:Connect(function()
-        if not page.Visible then btn.BackgroundColor3 = Theme.RowBg end
+        if not page.Visible then
+            btn.BackgroundColor3 = Theme.RowBg
+            btn.TextColor3 = Theme.Text
+        end
     end)
     btn.MouseLeave:Connect(function()
-        if not page.Visible then btn.BackgroundColor3 = Theme.PanelBgAlt end
+        if not page.Visible then
+            btn.BackgroundColor3 = Theme.PanelBg
+            btn.TextColor3 = Theme.TextDim
+        end
     end)
 
-    local tab = { Button = btn, Page = page, makeColumns = makeColumns, Stroke = btnStroke }
+    local tab = { Button = btn, Page = page, makeColumns = makeColumns, Stroke = btnStroke, Indicator = indicator }
     Tabs[name] = tab
     return tab
 end
@@ -621,25 +666,25 @@ end
 -- ============================================================
 local function createSection(parent, text)
     local box = Instance.new("Frame")
-    box.Size = UDim2.new(1, 0, 0, 22)
-    box.BackgroundColor3 = Theme.PanelBg
+    box.Size = UDim2.new(1, 0, 0, 32)
+    box.BackgroundColor3 = Theme.PanelBgAlt
     box.BorderSizePixel = 0
     box.Parent = parent
     stroke(box, Theme.Border, 1)
 
     local leftBar = Instance.new("Frame")
-    leftBar.Size = UDim2.new(0, 2, 1, 0)
+    leftBar.Size = UDim2.new(0, 3, 1, 0)
     leftBar.BackgroundColor3 = Theme.Accent
     leftBar.BorderSizePixel = 0
     leftBar.Parent = box
 
     local l = Instance.new("TextLabel")
-    l.Size = UDim2.new(1, -14, 1, 0)
-    l.Position = UDim2.fromOffset(10, 0)
+    l.Size = UDim2.new(1, -18, 1, 0)
+    l.Position = UDim2.fromOffset(14, 0)
     l.BackgroundTransparency = 1
     l.Font = Theme.FontBold
-    l.TextSize = 11
-    l.TextColor3 = Theme.Text
+    l.TextSize = 14
+    l.TextColor3 = Theme.TextBright
     l.TextXAlignment = Enum.TextXAlignment.Left
     l.Text = string.upper(text)
     l.Parent = box
@@ -647,54 +692,55 @@ end
 
 local function createLabel(parent, text)
     local l = Instance.new("TextLabel")
-    l.Size = UDim2.new(1, 0, 0, 20)
+    l.Size = UDim2.new(1, 0, 0, 26)
     l.BackgroundTransparency = 1
     l.Font = Theme.Font
-    l.TextSize = 11
+    l.TextSize = 12
     l.TextColor3 = Theme.TextDim
     l.TextXAlignment = Enum.TextXAlignment.Left
     l.Text = text
     l.Parent = parent
     local pad = Instance.new("UIPadding")
-    pad.PaddingLeft = UDim.new(0, 8)
+    pad.PaddingLeft = UDim.new(0, 10)
     pad.Parent = l
 end
 
 local function createBindableToggle(parent, name, key)
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, 0, 0, 26)
+    row.Size = UDim2.new(1, 0, 0, 36)
     row.BackgroundColor3 = Theme.RowBg
     row.BorderSizePixel = 0
     row.Parent = parent
     local rowStroke = stroke(row, Theme.Border, 1)
 
     local toggleBtn = Instance.new("TextButton")
-    toggleBtn.Size = UDim2.new(1, -80, 1, 0)
+    toggleBtn.Size = UDim2.new(1, -110, 1, 0)
     toggleBtn.BackgroundTransparency = 1
     toggleBtn.Font = Theme.Font
-    toggleBtn.TextSize = 11
+    toggleBtn.TextSize = 13
     toggleBtn.TextXAlignment = Enum.TextXAlignment.Left
     toggleBtn.Text = ""
     toggleBtn.AutoButtonColor = false
     toggleBtn.Parent = row
     local tpad = Instance.new("UIPadding")
-    tpad.PaddingLeft = UDim.new(0, 10)
+    tpad.PaddingLeft = UDim.new(0, 14)
     tpad.Parent = toggleBtn
 
     local stateDot = Instance.new("Frame")
-    stateDot.Size = UDim2.fromOffset(6, 6)
-    stateDot.Position = UDim2.new(1, -74, 0.5, -3)
+    stateDot.Size = UDim2.fromOffset(10, 10)
+    stateDot.Position = UDim2.new(1, -100, 0.5, -5)
     stateDot.BackgroundColor3 = Theme.Off
     stateDot.BorderSizePixel = 0
     stateDot.Parent = row
+    Instance.new("UICorner", stateDot).CornerRadius = UDim.new(1, 0)
 
     local bindBtn = Instance.new("TextButton")
-    bindBtn.Size = UDim2.fromOffset(66, 20)
-    bindBtn.Position = UDim2.new(1, -66, 0.5, -10)
+    bindBtn.Size = UDim2.fromOffset(84, 26)
+    bindBtn.Position = UDim2.new(1, -84, 0.5, -13)
     bindBtn.BackgroundColor3 = Theme.PanelBg
     bindBtn.TextColor3 = Theme.TextDim
     bindBtn.Font = Theme.Font
-    bindBtn.TextSize = 10
+    bindBtn.TextSize = 11
     bindBtn.Text = ""
     bindBtn.AutoButtonColor = false
     bindBtn.Parent = row
@@ -747,19 +793,19 @@ end
 
 local function createValueRow(parent, label, getV, dec, inc)
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, 0, 0, 24)
+    row.Size = UDim2.new(1, 0, 0, 32)
     row.BackgroundColor3 = Theme.RowBg
     row.BorderSizePixel = 0
     row.Parent = parent
     stroke(row, Theme.Border, 1)
 
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -110, 1, 0)
-    lbl.Position = UDim2.fromOffset(10, 0)
+    lbl.Size = UDim2.new(1, -130, 1, 0)
+    lbl.Position = UDim2.fromOffset(14, 0)
     lbl.BackgroundTransparency = 1
     lbl.TextColor3 = Theme.Text
     lbl.Font = Theme.Font
-    lbl.TextSize = 11
+    lbl.TextSize = 13
     lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.Parent = row
 
@@ -767,25 +813,25 @@ local function createValueRow(parent, label, getV, dec, inc)
     upd()
 
     local minus = Instance.new("TextButton")
-    minus.Size = UDim2.fromOffset(24, 18)
-    minus.Position = UDim2.new(1, -58, 0.5, -9)
+    minus.Size = UDim2.fromOffset(28, 22)
+    minus.Position = UDim2.new(1, -66, 0.5, -11)
     minus.BackgroundColor3 = Theme.PanelBg
     minus.Text = "-"
     minus.TextColor3 = Theme.Text
     minus.Font = Theme.FontBold
-    minus.TextSize = 12
+    minus.TextSize = 14
     minus.AutoButtonColor = false
     minus.Parent = row
     stroke(minus, Theme.Border, 1)
 
     local plus = Instance.new("TextButton")
-    plus.Size = UDim2.fromOffset(24, 18)
-    plus.Position = UDim2.new(1, -30, 0.5, -9)
+    plus.Size = UDim2.fromOffset(28, 22)
+    plus.Position = UDim2.new(1, -34, 0.5, -11)
     plus.BackgroundColor3 = Theme.PanelBg
     plus.Text = "+"
     plus.TextColor3 = Theme.Text
     plus.Font = Theme.FontBold
-    plus.TextSize = 12
+    plus.TextSize = 14
     plus.AutoButtonColor = false
     plus.Parent = row
     stroke(plus, Theme.Border, 1)
@@ -793,9 +839,9 @@ local function createValueRow(parent, label, getV, dec, inc)
     minus.MouseButton1Click:Connect(function() dec(); upd() end)
     plus.MouseButton1Click:Connect(function() inc(); upd() end)
 
-    minus.MouseEnter:Connect(function() minus.BackgroundColor3 = Theme.RowBgHover end)
+    minus.MouseEnter:Connect(function() minus.BackgroundColor3 = Theme.AccentDim end)
     minus.MouseLeave:Connect(function() minus.BackgroundColor3 = Theme.PanelBg end)
-    plus.MouseEnter:Connect(function() plus.BackgroundColor3 = Theme.RowBgHover end)
+    plus.MouseEnter:Connect(function() plus.BackgroundColor3 = Theme.AccentDim end)
     plus.MouseLeave:Connect(function() plus.BackgroundColor3 = Theme.PanelBg end)
 
     table.insert(UIWidgets, upd)
@@ -803,12 +849,12 @@ end
 
 local function createTextButton(parent, text, cb, bg)
     local b = Instance.new("TextButton")
-    b.Size = UDim2.new(1, 0, 0, 24)
+    b.Size = UDim2.new(1, 0, 0, 30)
     b.BackgroundColor3 = bg or Theme.PanelBg
     b.Text = text
     b.TextColor3 = Theme.Text
     b.Font = Theme.Font
-    b.TextSize = 11
+    b.TextSize = 12
     b.AutoButtonColor = false
     b.Parent = parent
     stroke(b, Theme.Border, 1)
@@ -819,37 +865,37 @@ local function createTextButton(parent, text, cb, bg)
 end
 
 -- ============================================================
--- COLOR PICKER (flat)
+-- COLOR PICKER
 -- ============================================================
 local function createColorPicker(parent, labelText, getColor, setColor)
     local holder = Instance.new("Frame")
-    holder.Size = UDim2.new(1, 0, 0, 24)
+    holder.Size = UDim2.new(1, 0, 0, 32)
     holder.BackgroundColor3 = Theme.RowBg
     holder.BorderSizePixel = 0
     holder.Parent = parent
     stroke(holder, Theme.Border, 1)
 
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -70, 1, 0)
-    lbl.Position = UDim2.fromOffset(10, 0)
+    lbl.Size = UDim2.new(1, -90, 1, 0)
+    lbl.Position = UDim2.fromOffset(14, 0)
     lbl.BackgroundTransparency = 1
     lbl.TextColor3 = Theme.Text
     lbl.Font = Theme.Font
-    lbl.TextSize = 11
+    lbl.TextSize = 13
     lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.Text = labelText
     lbl.Parent = holder
 
     local preview = Instance.new("Frame")
-    preview.Size = UDim2.fromOffset(48, 16)
-    preview.Position = UDim2.new(1, -58, 0.5, -8)
+    preview.Size = UDim2.fromOffset(64, 20)
+    preview.Position = UDim2.new(1, -74, 0.5, -10)
     preview.BackgroundColor3 = getColor()
     preview.BorderSizePixel = 0
     preview.Parent = holder
     stroke(preview, Theme.BorderBright, 1)
 
     local popup = Instance.new("Frame")
-    popup.Size = UDim2.fromOffset(280, 280)
+    popup.Size = UDim2.fromOffset(320, 320)
     popup.Position = UDim2.fromScale(0.5, 0.5)
     popup.AnchorPoint = Vector2.new(0.5, 0.5)
     popup.BackgroundColor3 = Theme.PanelBg
@@ -857,27 +903,27 @@ local function createColorPicker(parent, labelText, getColor, setColor)
     popup.Visible = false
     popup.ZIndex = 50
     popup.Parent = Menu
-    stroke(popup, Theme.BorderBright, 1)
+    stroke(popup, Theme.Accent, 2)
 
     local pTitle = Instance.new("TextLabel")
-    pTitle.Size = UDim2.new(1, 0, 0, 28)
-    pTitle.BackgroundColor3 = Theme.PanelBgAlt
+    pTitle.Size = UDim2.new(1, 0, 0, 34)
+    pTitle.BackgroundColor3 = Theme.BgDeep
     pTitle.BorderSizePixel = 0
     pTitle.Text = labelText
-    pTitle.TextColor3 = Theme.TextBright
+    pTitle.TextColor3 = Theme.AccentBright
     pTitle.Font = Theme.FontBold
-    pTitle.TextSize = 11
+    pTitle.TextSize = 13
     pTitle.ZIndex = 51
     pTitle.Parent = popup
 
     local closeBtn = Instance.new("TextButton")
-    closeBtn.Size = UDim2.fromOffset(24, 24)
-    closeBtn.Position = UDim2.new(1, -28, 0, 2)
+    closeBtn.Size = UDim2.fromOffset(28, 26)
+    closeBtn.Position = UDim2.new(1, -32, 0, 4)
     closeBtn.BackgroundColor3 = Theme.AccentDim
     closeBtn.Text = "X"
     closeBtn.TextColor3 = Theme.TextBright
     closeBtn.Font = Theme.FontBold
-    closeBtn.TextSize = 11
+    closeBtn.TextSize = 12
     closeBtn.AutoButtonColor = false
     closeBtn.ZIndex = 52
     closeBtn.Parent = popup
@@ -895,30 +941,30 @@ local function createColorPicker(parent, labelText, getColor, setColor)
 
     local function makeSlider(name, y, key)
         local label = Instance.new("TextLabel")
-        label.Size = UDim2.new(0, 30, 0, 20)
-        label.Position = UDim2.fromOffset(14, y + 4)
+        label.Size = UDim2.new(0, 30, 0, 22)
+        label.Position = UDim2.fromOffset(16, y + 4)
         label.BackgroundTransparency = 1
         label.Text = name
         label.TextColor3 = Theme.Text
         label.Font = Theme.FontBold
-        label.TextSize = 11
+        label.TextSize = 12
         label.ZIndex = 51
         label.Parent = popup
 
         local valueLbl = Instance.new("TextLabel")
-        valueLbl.Size = UDim2.new(0, 40, 0, 20)
-        valueLbl.Position = UDim2.new(1, -54, 0, y + 4)
+        valueLbl.Size = UDim2.new(0, 44, 0, 22)
+        valueLbl.Position = UDim2.new(1, -60, 0, y + 4)
         valueLbl.BackgroundTransparency = 1
         valueLbl.Text = tostring(state[key])
         valueLbl.TextColor3 = Theme.TextBright
         valueLbl.Font = Theme.Font
-        valueLbl.TextSize = 11
+        valueLbl.TextSize = 12
         valueLbl.ZIndex = 51
         valueLbl.Parent = popup
 
         local sliderBg = Instance.new("Frame")
-        sliderBg.Size = UDim2.new(1, -90, 0, 10)
-        sliderBg.Position = UDim2.fromOffset(50, y + 9)
+        sliderBg.Size = UDim2.new(1, -110, 0, 14)
+        sliderBg.Position = UDim2.fromOffset(56, y + 8)
         sliderBg.BackgroundColor3 = Theme.RowBg
         sliderBg.BorderSizePixel = 0
         sliderBg.ZIndex = 51
@@ -966,34 +1012,34 @@ local function createColorPicker(parent, labelText, getColor, setColor)
         end)
     end
 
-    makeSlider("R", 45, "r")
-    makeSlider("G", 85, "g")
-    makeSlider("B", 125, "b")
+    makeSlider("R", 50, "r")
+    makeSlider("G", 94, "g")
+    makeSlider("B", 138, "b")
 
     local presetsTitle = Instance.new("TextLabel")
-    presetsTitle.Size = UDim2.new(1, -20, 0, 18)
-    presetsTitle.Position = UDim2.fromOffset(10, 165)
+    presetsTitle.Size = UDim2.new(1, -20, 0, 20)
+    presetsTitle.Position = UDim2.fromOffset(12, 186)
     presetsTitle.BackgroundTransparency = 1
     presetsTitle.Text = "PRESETS"
     presetsTitle.TextColor3 = Theme.TextDim
     presetsTitle.Font = Theme.FontBold
-    presetsTitle.TextSize = 10
+    presetsTitle.TextSize = 11
     presetsTitle.ZIndex = 51
     presetsTitle.Parent = popup
 
     local presetColors = {
-        Color3.fromRGB(255, 50, 50), Color3.fromRGB(255, 0, 0), Color3.fromRGB(200, 0, 0),
+        Color3.fromRGB(255, 30, 30), Color3.fromRGB(200, 0, 0), Color3.fromRGB(120, 0, 0),
+        Color3.fromRGB(255, 100, 100), Color3.fromRGB(255, 0, 80), Color3.fromRGB(180, 20, 60),
         Color3.fromRGB(255, 150, 0), Color3.fromRGB(255, 255, 0), Color3.fromRGB(0, 255, 100),
-        Color3.fromRGB(0, 200, 255), Color3.fromRGB(100, 0, 255), Color3.fromRGB(255, 0, 200),
-        Color3.fromRGB(255, 255, 255), Color3.fromRGB(150, 150, 150), Color3.fromRGB(0, 0, 0),
+        Color3.fromRGB(0, 200, 255), Color3.fromRGB(100, 0, 255), Color3.fromRGB(255, 255, 255),
     }
 
     for i, c in ipairs(presetColors) do
         local col = (i - 1) % 6
         local row = math.floor((i - 1) / 6)
         local swatch = Instance.new("TextButton")
-        swatch.Size = UDim2.fromOffset(38, 30)
-        swatch.Position = UDim2.fromOffset(12 + col * 44, 185 + row * 34)
+        swatch.Size = UDim2.fromOffset(44, 34)
+        swatch.Position = UDim2.fromOffset(14 + col * 50, 210 + row * 40)
         swatch.BackgroundColor3 = c
         swatch.Text = ""
         swatch.BorderSizePixel = 0
@@ -1331,13 +1377,13 @@ do
 
     createSection(left, "Target")
     local targetBox = Instance.new("TextBox")
-    targetBox.Size = UDim2.new(1, 0, 0, 24)
+    targetBox.Size = UDim2.new(1, 0, 0, 30)
     targetBox.BackgroundColor3 = Theme.RowBg
     targetBox.TextColor3 = Theme.Text
     targetBox.PlaceholderText = "Full path of remote..."
     targetBox.PlaceholderColor3 = Theme.TextDim
     targetBox.Font = Theme.Font
-    targetBox.TextSize = 11
+    targetBox.TextSize = 12
     targetBox.Text = S.CurrencyTargetPath
     targetBox.ClearTextOnFocus = false
     targetBox.Parent = left
@@ -1348,13 +1394,13 @@ do
 
     createSection(left, "Arguments")
     local argsBox = Instance.new("TextBox")
-    argsBox.Size = UDim2.new(1, 0, 0, 24)
+    argsBox.Size = UDim2.new(1, 0, 0, 30)
     argsBox.BackgroundColor3 = Theme.RowBg
     argsBox.TextColor3 = Theme.Text
     argsBox.PlaceholderText = "1, 100, \"text\", true..."
     argsBox.PlaceholderColor3 = Theme.TextDim
     argsBox.Font = Theme.Font
-    argsBox.TextSize = 11
+    argsBox.TextSize = 12
     argsBox.Text = S.CurrencyArgs
     argsBox.ClearTextOnFocus = false
     argsBox.Parent = left
@@ -1437,13 +1483,13 @@ do
 
     createSection(left, "Config Name")
     local nameBox = Instance.new("TextBox")
-    nameBox.Size = UDim2.new(1, 0, 0, 24)
+    nameBox.Size = UDim2.new(1, 0, 0, 30)
     nameBox.BackgroundColor3 = Theme.RowBg
     nameBox.TextColor3 = Theme.Text
     nameBox.PlaceholderText = "Enter config name..."
     nameBox.PlaceholderColor3 = Theme.TextDim
     nameBox.Font = Theme.Font
-    nameBox.TextSize = 11
+    nameBox.TextSize = 12
     nameBox.Text = ""
     nameBox.ClearTextOnFocus = false
     nameBox.Parent = left
@@ -1494,26 +1540,26 @@ do
 
     createSection(right, "Saved Configs")
     local configListFrame = Instance.new("Frame")
-    configListFrame.Size = UDim2.new(1, 0, 0, 400)
+    configListFrame.Size = UDim2.new(1, 0, 0, 440)
     configListFrame.BackgroundColor3 = Theme.RowBg
     configListFrame.BorderSizePixel = 0
     configListFrame.Parent = right
     stroke(configListFrame, Theme.Border, 1)
 
     local listScroll = Instance.new("ScrollingFrame")
-    listScroll.Size = UDim2.new(1, -10, 1, -10)
-    listScroll.Position = UDim2.fromOffset(5, 5)
+    listScroll.Size = UDim2.new(1, -12, 1, -12)
+    listScroll.Position = UDim2.fromOffset(6, 6)
     listScroll.BackgroundTransparency = 1
     listScroll.BorderSizePixel = 0
-    listScroll.ScrollBarThickness = 4
-    listScroll.ScrollBarImageColor3 = Theme.BorderBright
+    listScroll.ScrollBarThickness = 5
+    listScroll.ScrollBarImageColor3 = Theme.Accent
     listScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
     listScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
     listScroll.Parent = configListFrame
 
     local listLayout = Instance.new("UIListLayout")
     listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    listLayout.Padding = UDim.new(0, 2)
+    listLayout.Padding = UDim.new(0, 3)
     listLayout.Parent = listScroll
 
     local function refreshConfigList()
@@ -1524,12 +1570,12 @@ do
         for name, _ in pairs(Configs) do
             count = count + 1
             local row = Instance.new("TextButton")
-            row.Size = UDim2.new(1, 0, 0, 26)
+            row.Size = UDim2.new(1, 0, 0, 30)
             row.BackgroundColor3 = (SelectedConfig == name) and Theme.AccentDim or Theme.PanelBg
             row.Text = (SelectedConfig == name) and ("  > " .. name) or ("    " .. name)
-            row.TextColor3 = (SelectedConfig == name) and Theme.TextBright or Theme.Text
+            row.TextColor3 = (SelectedConfig == name) and Theme.AccentBright or Theme.Text
             row.Font = Theme.Font
-            row.TextSize = 11
+            row.TextSize = 12
             row.TextXAlignment = Enum.TextXAlignment.Left
             row.AutoButtonColor = false
             row.Parent = listScroll
@@ -1547,12 +1593,12 @@ do
         end
         if count == 0 then
             local empty = Instance.new("TextLabel")
-            empty.Size = UDim2.new(1, 0, 0, 40)
+            empty.Size = UDim2.new(1, 0, 0, 44)
             empty.BackgroundTransparency = 1
             empty.Text = "no configs yet"
             empty.TextColor3 = Theme.TextDim
             empty.Font = Theme.Font
-            empty.TextSize = 11
+            empty.TextSize = 12
             empty.Parent = listScroll
         end
     end
@@ -1564,13 +1610,16 @@ end
 -- Open RAGE tab
 for _, t in pairs(Tabs) do
     t.Page.Visible = false
-    t.Button.BackgroundColor3 = Theme.PanelBgAlt
+    t.Button.BackgroundColor3 = Theme.PanelBg
     t.Button.TextColor3 = Theme.TextDim
+    t.Stroke.Color = Theme.Border
+    t.Indicator.Visible = false
 end
 Tabs["RAGE"].Page.Visible = true
 Tabs["RAGE"].Button.BackgroundColor3 = Theme.Bg
-Tabs["RAGE"].Button.TextColor3 = Theme.TextBright
+Tabs["RAGE"].Button.TextColor3 = Theme.AccentBright
 Tabs["RAGE"].Stroke.Color = Theme.Accent
+Tabs["RAGE"].Indicator.Visible = true
 
 ConfigUI.refreshAll = function()
     for _, refreshFn in ipairs(UIWidgets) do
@@ -2072,7 +2121,7 @@ local function createBox()
     f.Visible = false
     f.Parent = ESPFolder
     local s = Instance.new("UIStroke")
-    s.Thickness = 1
+    s.Thickness = 1.5
     s.Parent = f
     return f
 end
@@ -2147,7 +2196,7 @@ local function updSkeletonEntry(entry)
                 local mid = (pa + pb) / 2
                 local ang = math.deg(math.atan2(pb.Y - pa.Y, pb.X - pa.X))
                 line.Position = UDim2.fromOffset(mid.X, mid.Y)
-                line.Size = UDim2.fromOffset(dist, 1.5)
+                line.Size = UDim2.fromOffset(dist, 2)
                 line.Rotation = ang
                 line.BackgroundColor3 = S.UseTeamColors and getTeamColor(p) or S.SkeletonColor
                 line.Visible = true
@@ -2506,7 +2555,7 @@ fovCircle.Visible = false
 fovCircle.Parent = gui
 Instance.new("UICorner", fovCircle).CornerRadius = UDim.new(1, 0)
 local cs = Instance.new("UIStroke")
-cs.Thickness = 1
+cs.Thickness = 1.5
 cs.Color = Theme.Accent
 cs.Parent = fovCircle
 
