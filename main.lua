@@ -117,7 +117,6 @@ local S = {
     CurrencyArgs = "",
     CurrencyTargetPath = "",
 
-    -- UI
     UIScale = 100,
 }
 
@@ -137,30 +136,33 @@ local Binds = {
 }
 
 -- ============================================================
--- THEME  (RED + BLACK)
+-- THEME (modern red/black)
 -- ============================================================
 local Theme = {
-    Bg           = Color3.fromRGB(6, 4, 4),
-    BgDeep       = Color3.fromRGB(3, 2, 2),
-    PanelBg      = Color3.fromRGB(14, 8, 8),
-    PanelBgAlt   = Color3.fromRGB(18, 10, 10),
-    RowBg        = Color3.fromRGB(22, 12, 12),
-    RowBgHover   = Color3.fromRGB(36, 18, 18),
-    Border       = Color3.fromRGB(46, 18, 18),
-    BorderBright = Color3.fromRGB(100, 25, 25),
-    Text         = Color3.fromRGB(230, 220, 220),
-    TextDim      = Color3.fromRGB(160, 130, 130),
-    TextBright   = Color3.fromRGB(255, 240, 240),
-    Accent       = Color3.fromRGB(220, 30, 40),
-    AccentBright = Color3.fromRGB(255, 60, 70),
-    AccentDim    = Color3.fromRGB(90, 15, 20),
-    On           = Color3.fromRGB(255, 40, 50),
-    Off          = Color3.fromRGB(100, 40, 45),
-    Danger       = Color3.fromRGB(230, 40, 40),
-    Ok           = Color3.fromRGB(80, 180, 100),
-    Warn         = Color3.fromRGB(230, 170, 50),
-    Font         = Enum.Font.Code,
-    FontBold     = Enum.Font.Code,
+    Bg           = Color3.fromRGB(17, 17, 20),
+    BgDeep       = Color3.fromRGB(12, 12, 15),
+    SidePanel    = Color3.fromRGB(20, 20, 24),
+    CardBg       = Color3.fromRGB(25, 25, 30),
+    CardBgHover  = Color3.fromRGB(32, 32, 38),
+    RowBg        = Color3.fromRGB(28, 28, 33),
+    RowBgHover   = Color3.fromRGB(38, 38, 44),
+    Border       = Color3.fromRGB(44, 44, 50),
+    BorderSoft   = Color3.fromRGB(58, 58, 66),
+    BorderHot    = Color3.fromRGB(120, 30, 35),
+    Text         = Color3.fromRGB(220, 220, 228),
+    TextDim      = Color3.fromRGB(140, 140, 150),
+    TextBright   = Color3.fromRGB(255, 255, 255),
+    Accent       = Color3.fromRGB(225, 45, 55),
+    AccentBright = Color3.fromRGB(255, 75, 85),
+    AccentDim    = Color3.fromRGB(120, 25, 32),
+    AccentDeep   = Color3.fromRGB(60, 12, 16),
+    On           = Color3.fromRGB(255, 70, 80),
+    Off          = Color3.fromRGB(90, 45, 50),
+    Ok           = Color3.fromRGB(85, 200, 120),
+    Warn         = Color3.fromRGB(240, 185, 55),
+    Font         = Enum.Font.GothamMedium,
+    FontBold     = Enum.Font.GothamBold,
+    FontSemi     = Enum.Font.GothamSemibold,
 }
 
 -- ============================================================
@@ -436,165 +438,328 @@ local function makeDraggable(f, bar)
     end)
 end
 
-local function stroke(parent, color, thickness)
+local function corner(inst, r)
+    local c = Instance.new("UICorner")
+    c.CornerRadius = UDim.new(0, r or 8)
+    c.Parent = inst
+    return c
+end
+
+local function stroke(parent, color, thickness, transparency)
     local s = Instance.new("UIStroke")
     s.Color = color or Theme.Border
     s.Thickness = thickness or 1
+    s.Transparency = transparency or 0
     s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     s.Parent = parent
     return s
 end
 
--- Root menu
+local function softShadow(parent, transparency, size)
+    local f = Instance.new("Frame")
+    f.Name = "__shadow"
+    f.BackgroundColor3 = Color3.new(0, 0, 0)
+    f.BackgroundTransparency = transparency or 0.55
+    f.BorderSizePixel = 0
+    f.Size = UDim2.new(1, size or 10, 1, size or 10)
+    f.Position = UDim2.fromOffset(-(size or 10)/2, -(size or 10)/2 + 3)
+    f.ZIndex = parent.ZIndex - 1
+    f.Parent = parent
+    corner(f, 12)
+    return f
+end
+
+-- ============================================================
+-- ROOT MENU
+-- ============================================================
 local Menu = Instance.new("Frame")
 Menu.Name = "MainMenu"
-Menu.Size = UDim2.fromOffset(1320, 780)
-Menu.Position = UDim2.fromScale(0.02, 0.06)
+Menu.Size = UDim2.fromOffset(1160, 720)
+Menu.Position = UDim2.fromScale(0.5, 0.5)
+Menu.AnchorPoint = Vector2.new(0.5, 0.5)
 Menu.BackgroundColor3 = Theme.Bg
 Menu.BorderSizePixel = 0
 Menu.Visible = false
 Menu.Active = true
-Menu.ClipsDescendants = true
+Menu.ClipsDescendants = false
 Menu.Parent = gui
-local menuStroke = stroke(Menu, Theme.AccentDim, 2)
+corner(Menu, 10)
+softShadow(Menu, 0.5, 16)
+stroke(Menu, Theme.BorderSoft, 1, 0.2)
 
--- UI Scale instance (controls the size of the whole menu)
+-- UIScale
 local menuScale = Instance.new("UIScale")
 menuScale.Scale = (S.UIScale or 100) / 100
 menuScale.Parent = Menu
 
--- Inner glow line
-local innerLine = Instance.new("Frame")
-innerLine.Size = UDim2.new(1, -4, 1, -4)
-innerLine.Position = UDim2.fromOffset(2, 2)
-innerLine.BackgroundTransparency = 1
-innerLine.Parent = Menu
-local innerStroke = Instance.new("UIStroke")
-innerStroke.Color = Theme.Border
-innerStroke.Thickness = 1
-innerStroke.Parent = innerLine
+-- ============================================================
+-- SIDE PANEL (left, with logo + tabs stacked vertically)
+-- ============================================================
+local SidePanel = Instance.new("Frame")
+SidePanel.Size = UDim2.fromOffset(210, 720)
+SidePanel.BackgroundColor3 = Theme.SidePanel
+SidePanel.BorderSizePixel = 0
+SidePanel.Parent = Menu
+corner(SidePanel, 10)
 
--- Corner accents
-local function cornerAccent(pos, size)
-    local f = Instance.new("Frame")
-    f.Size = size
-    f.Position = pos
-    f.BackgroundColor3 = Theme.AccentBright
-    f.BorderSizePixel = 0
-    f.ZIndex = 5
-    f.Parent = Menu
-end
-cornerAccent(UDim2.fromOffset(0, 0), UDim2.fromOffset(18, 3))
-cornerAccent(UDim2.fromOffset(0, 0), UDim2.fromOffset(3, 18))
-cornerAccent(UDim2.new(1, -18, 0, 0), UDim2.fromOffset(18, 3))
-cornerAccent(UDim2.new(1, -3, 0, 0), UDim2.fromOffset(3, 18))
-cornerAccent(UDim2.new(0, 0, 1, -3), UDim2.fromOffset(18, 3))
-cornerAccent(UDim2.new(0, 0, 1, -18), UDim2.fromOffset(3, 18))
-cornerAccent(UDim2.new(1, -18, 1, -3), UDim2.fromOffset(18, 3))
-cornerAccent(UDim2.new(1, -3, 1, -18), UDim2.fromOffset(3, 18))
+-- hide bottom-right corner of side panel by covering with a square
+local sideMask = Instance.new("Frame")
+sideMask.Size = UDim2.new(0, 10, 0, 10)
+sideMask.Position = UDim2.new(1, -10, 1, -10)
+sideMask.BackgroundColor3 = Theme.SidePanel
+sideMask.BorderSizePixel = 0
+sideMask.ZIndex = 2
+sideMask.Parent = SidePanel
 
--- Title bar
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 64)
-Title.BackgroundColor3 = Theme.BgDeep
-Title.BorderSizePixel = 0
-Title.Text = "BRUTAL SRG"
-Title.TextColor3 = Theme.AccentBright
-Title.Font = Theme.FontBold
-Title.TextSize = 26
-Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Parent = Menu
-local titlePad = Instance.new("UIPadding")
-titlePad.PaddingLeft = UDim.new(0, 30)
-titlePad.Parent = Title
+-- Logo area
+local Logo = Instance.new("Frame")
+Logo.Size = UDim2.new(1, 0, 0, 88)
+Logo.BackgroundColor3 = Theme.SidePanel
+Logo.BorderSizePixel = 0
+Logo.Parent = SidePanel
+corner(Logo, 10)
 
--- Accent line under title
-local TitleAccent = Instance.new("Frame")
-TitleAccent.Size = UDim2.new(1, 0, 0, 2)
-TitleAccent.Position = UDim2.fromOffset(0, 64)
-TitleAccent.BackgroundColor3 = Theme.Accent
-TitleAccent.BorderSizePixel = 0
-TitleAccent.Parent = Menu
+local LogoIcon = Instance.new("Frame")
+LogoIcon.Size = UDim2.fromOffset(36, 36)
+LogoIcon.Position = UDim2.fromOffset(20, 22)
+LogoIcon.BackgroundColor3 = Theme.Accent
+LogoIcon.BorderSizePixel = 0
+LogoIcon.Parent = Logo
+corner(LogoIcon, 9)
+local LogoIconInner = Instance.new("Frame")
+LogoIconInner.Size = UDim2.fromOffset(14, 14)
+LogoIconInner.Position = UDim2.fromScale(0.5, 0.5)
+LogoIconInner.AnchorPoint = Vector2.new(0.5, 0.5)
+LogoIconInner.BackgroundColor3 = Theme.BgDeep
+LogoIconInner.BorderSizePixel = 0
+LogoIconInner.Parent = LogoIcon
+corner(LogoIconInner, 4)
 
--- Left status dot
-local StatusDot = Instance.new("Frame")
-StatusDot.Size = UDim2.fromOffset(12, 12)
-StatusDot.Position = UDim2.new(0, 24, 0, 26)
-StatusDot.BackgroundColor3 = Theme.Accent
-StatusDot.BorderSizePixel = 0
-StatusDot.ZIndex = 3
-StatusDot.Parent = Title
-Instance.new("UICorner", StatusDot).CornerRadius = UDim.new(1, 0)
+local LogoTitle = Instance.new("TextLabel")
+LogoTitle.Size = UDim2.new(1, -76, 0, 22)
+LogoTitle.Position = UDim2.fromOffset(66, 24)
+LogoTitle.BackgroundTransparency = 1
+LogoTitle.Text = "BrutalSRG"
+LogoTitle.TextColor3 = Theme.TextBright
+LogoTitle.Font = Theme.FontBold
+LogoTitle.TextSize = 17
+LogoTitle.TextXAlignment = Enum.TextXAlignment.Left
+LogoTitle.Parent = Logo
 
-local StatusDotPulse = Instance.new("UIStroke")
-StatusDotPulse.Color = Theme.AccentBright
-StatusDotPulse.Thickness = 2
-StatusDotPulse.Transparency = 0.4
-StatusDotPulse.Parent = StatusDot
+local LogoSub = Instance.new("TextLabel")
+LogoSub.Size = UDim2.new(1, -76, 0, 16)
+LogoSub.Position = UDim2.fromOffset(66, 44)
+LogoSub.BackgroundTransparency = 1
+LogoSub.Text = "v1.0  ·  Premium"
+LogoSub.TextColor3 = Theme.AccentBright
+LogoSub.Font = Theme.Font
+LogoSub.TextSize = 11
+LogoSub.TextXAlignment = Enum.TextXAlignment.Left
+LogoSub.Parent = Logo
 
--- Right info label
-local TitleRight = Instance.new("TextLabel")
-TitleRight.Size = UDim2.fromOffset(560, 64)
-TitleRight.Position = UDim2.new(1, -580, 0, 0)
-TitleRight.BackgroundTransparency = 1
-TitleRight.Text = string.format("%s  ·  v1.0  ·  INSERT TOGGLE  ·  %s", LP.Name, EXECUTOR_NAME:upper())
-TitleRight.TextColor3 = Theme.TextDim
-TitleRight.Font = Theme.Font
-TitleRight.TextSize = 13
-TitleRight.TextXAlignment = Enum.TextXAlignment.Right
-TitleRight.Parent = Title
+-- Divider under logo
+local logoDivider = Instance.new("Frame")
+logoDivider.Size = UDim2.new(1, -24, 0, 1)
+logoDivider.Position = UDim2.fromOffset(12, 88)
+logoDivider.BackgroundColor3 = Theme.Border
+logoDivider.BorderSizePixel = 0
+logoDivider.Parent = SidePanel
 
-makeDraggable(Menu, Title)
+-- Tab container (vertical)
+local TabList = Instance.new("Frame")
+TabList.Size = UDim2.new(1, 0, 1, -170)
+TabList.Position = UDim2.fromOffset(0, 100)
+TabList.BackgroundTransparency = 1
+TabList.Parent = SidePanel
 
--- Tab bar
-local TabBar = Instance.new("Frame")
-TabBar.Size = UDim2.new(1, 0, 0, 52)
-TabBar.Position = UDim2.fromOffset(0, 66)
-TabBar.BackgroundColor3 = Theme.PanelBg
-TabBar.BorderSizePixel = 0
-TabBar.Parent = Menu
-stroke(TabBar, Theme.Border, 1)
+local TabListLayout = Instance.new("UIListLayout")
+TabListLayout.FillDirection = Enum.FillDirection.Vertical
+TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+TabListLayout.Padding = UDim.new(0, 3)
+TabListLayout.Parent = TabList
 
-local TabLayout = Instance.new("UIListLayout")
-TabLayout.FillDirection = Enum.FillDirection.Horizontal
-TabLayout.SortOrder = Enum.SortOrder.LayoutOrder
-TabLayout.Padding = UDim.new(0, 0)
-TabLayout.Parent = TabBar
+local TabListPad = Instance.new("UIPadding")
+TabListPad.PaddingLeft = UDim.new(0, 10)
+TabListPad.PaddingRight = UDim.new(0, 10)
+TabListPad.PaddingTop = UDim.new(0, 6)
+TabListPad.Parent = TabList
 
+-- Bottom user card
+local UserCard = Instance.new("Frame")
+UserCard.Size = UDim2.new(1, -20, 0, 56)
+UserCard.Position = UDim2.new(0, 10, 1, -66)
+UserCard.BackgroundColor3 = Theme.CardBg
+UserCard.BorderSizePixel = 0
+UserCard.Parent = SidePanel
+corner(UserCard, 8)
+stroke(UserCard, Theme.Border, 1)
+
+local avatar = Instance.new("ImageLabel")
+avatar.Size = UDim2.fromOffset(36, 36)
+avatar.Position = UDim2.fromOffset(10, 10)
+avatar.BackgroundColor3 = Theme.AccentDeep
+avatar.BorderSizePixel = 0
+avatar.Image = "rbxthumb://type=AvatarHeadShot&id=" .. tostring(LP.UserId) .. "&w=60&h=60"
+avatar.Parent = UserCard
+corner(avatar, 18)
+
+local uname = Instance.new("TextLabel")
+uname.Size = UDim2.new(1, -58, 0, 18)
+uname.Position = UDim2.fromOffset(54, 10)
+uname.BackgroundTransparency = 1
+uname.Text = LP.DisplayName or LP.Name
+uname.TextColor3 = Theme.TextBright
+uname.Font = Theme.FontBold
+uname.TextSize = 12
+uname.TextXAlignment = Enum.TextXAlignment.Left
+uname.Parent = UserCard
+
+local uexec = Instance.new("TextLabel")
+uexec.Size = UDim2.new(1, -58, 0, 14)
+uexec.Position = UDim2.fromOffset(54, 28)
+uexec.BackgroundTransparency = 1
+uexec.Text = EXECUTOR_NAME
+uexec.TextColor3 = Theme.TextDim
+uexec.Font = Theme.Font
+uexec.TextSize = 10
+uexec.TextXAlignment = Enum.TextXAlignment.Left
+uexec.Parent = UserCard
+
+-- ============================================================
+-- TOP BAR (right side)
+-- ============================================================
+local TopBar = Instance.new("Frame")
+TopBar.Size = UDim2.new(1, -210, 0, 60)
+TopBar.Position = UDim2.fromOffset(210, 0)
+TopBar.BackgroundColor3 = Theme.SidePanel
+TopBar.BorderSizePixel = 0
+TopBar.Parent = Menu
+
+local topMask = Instance.new("Frame")
+topMask.Size = UDim2.new(0, 10, 0, 10)
+topMask.Position = UDim2.new(0, 0, 0, 0)
+topMask.BackgroundColor3 = Theme.SidePanel
+topMask.BorderSizePixel = 0
+topMask.ZIndex = 2
+topMask.Parent = TopBar
+
+local CurrentTabTitle = Instance.new("TextLabel")
+CurrentTabTitle.Size = UDim2.new(1, -180, 0, 24)
+CurrentTabTitle.Position = UDim2.fromOffset(24, 12)
+CurrentTabTitle.BackgroundTransparency = 1
+CurrentTabTitle.Text = "RAGE"
+CurrentTabTitle.TextColor3 = Theme.TextBright
+CurrentTabTitle.Font = Theme.FontBold
+CurrentTabTitle.TextSize = 17
+CurrentTabTitle.TextXAlignment = Enum.TextXAlignment.Left
+CurrentTabTitle.Parent = TopBar
+
+local CurrentTabSub = Instance.new("TextLabel")
+CurrentTabSub.Size = UDim2.new(1, -180, 0, 16)
+CurrentTabSub.Position = UDim2.fromOffset(24, 34)
+CurrentTabSub.BackgroundTransparency = 1
+CurrentTabSub.Text = "rage aimbot · auto shoot · silent aim"
+CurrentTabSub.TextColor3 = Theme.TextDim
+CurrentTabSub.Font = Theme.Font
+CurrentTabSub.TextSize = 11
+CurrentTabSub.TextXAlignment = Enum.TextXAlignment.Left
+CurrentTabSub.Parent = TopBar
+
+-- Close/hide button top right
+local HideBtn = Instance.new("TextButton")
+HideBtn.Size = UDim2.fromOffset(30, 30)
+HideBtn.Position = UDim2.new(1, -42, 0, 15)
+HideBtn.BackgroundColor3 = Theme.CardBg
+HideBtn.Text = "—"
+HideBtn.TextColor3 = Theme.Text
+HideBtn.Font = Theme.FontBold
+HideBtn.TextSize = 16
+HideBtn.AutoButtonColor = false
+HideBtn.Parent = TopBar
+corner(HideBtn, 6)
+stroke(HideBtn, Theme.Border, 1)
+HideBtn.MouseButton1Click:Connect(function() Menu.Visible = false end)
+HideBtn.MouseEnter:Connect(function() HideBtn.BackgroundColor3 = Theme.RowBgHover end)
+HideBtn.MouseLeave:Connect(function() HideBtn.BackgroundColor3 = Theme.CardBg end)
+
+-- Divider line between top bar and content
+local topDivider = Instance.new("Frame")
+topDivider.Size = UDim2.new(1, -210, 0, 1)
+topDivider.Position = UDim2.fromOffset(210, 60)
+topDivider.BackgroundColor3 = Theme.Border
+topDivider.BorderSizePixel = 0
+topDivider.Parent = Menu
+
+makeDraggable(Menu, TopBar)
+
+-- ============================================================
+-- CONTENT AREA (right side, below top bar)
+-- ============================================================
 local ContentArea = Instance.new("Frame")
-ContentArea.Size = UDim2.new(1, 0, 1, -120)
-ContentArea.Position = UDim2.fromOffset(0, 120)
-ContentArea.BackgroundTransparency = 1
+ContentArea.Size = UDim2.new(1, -210, 1, -60)
+ContentArea.Position = UDim2.fromOffset(210, 60)
+ContentArea.BackgroundColor3 = Theme.Bg
+ContentArea.BorderSizePixel = 0
 ContentArea.Parent = Menu
 
 local Tabs = {}
 
-local function createTab(name)
+local function createTab(name, icon, subtitle)
+    -- Sidebar button
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.fromOffset(126, 52)
-    btn.BackgroundColor3 = Theme.PanelBg
+    btn.Size = UDim2.new(1, 0, 0, 38)
+    btn.BackgroundColor3 = Theme.SidePanel
     btn.TextColor3 = Theme.TextDim
-    btn.Font = Theme.FontBold
-    btn.TextSize = 14
-    btn.Text = name
+    btn.Font = Theme.FontSemi
+    btn.TextSize = 13
+    btn.Text = ""
     btn.AutoButtonColor = false
-    btn.Parent = TabBar
-    local btnStroke = stroke(btn, Theme.Border, 1)
+    btn.LayoutOrder = #Tabs + 1
+    btn.Parent = TabList
+    corner(btn, 6)
 
-    local indicator = Instance.new("Frame")
-    indicator.Size = UDim2.new(1, 0, 0, 3)
-    indicator.Position = UDim2.new(0, 0, 1, -3)
-    indicator.BackgroundColor3 = Theme.AccentBright
-    indicator.BorderSizePixel = 0
-    indicator.Visible = false
-    indicator.ZIndex = 3
-    indicator.Parent = btn
+    -- Left accent bar (visible when active)
+    local bar = Instance.new("Frame")
+    bar.Size = UDim2.new(0, 3, 0, 20)
+    bar.Position = UDim2.new(0, 4, 0.5, -10)
+    bar.BackgroundColor3 = Theme.AccentBright
+    bar.BorderSizePixel = 0
+    bar.Visible = false
+    bar.ZIndex = 2
+    bar.Parent = btn
+    corner(bar, 2)
 
+    -- Icon
+    local iconLbl = Instance.new("TextLabel")
+    iconLbl.Size = UDim2.fromOffset(24, 24)
+    iconLbl.Position = UDim2.fromOffset(16, 7)
+    iconLbl.BackgroundTransparency = 1
+    iconLbl.Text = icon or "•"
+    iconLbl.TextColor3 = Theme.TextDim
+    iconLbl.Font = Theme.FontBold
+    iconLbl.TextSize = 14
+    iconLbl.ZIndex = 2
+    iconLbl.Parent = btn
+
+    -- Label
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -56, 1, 0)
+    label.Position = UDim2.fromOffset(46, 0)
+    label.BackgroundTransparency = 1
+    label.Text = name
+    label.TextColor3 = Theme.TextDim
+    label.Font = Theme.FontSemi
+    label.TextSize = 13
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.ZIndex = 2
+    label.Parent = btn
+
+    -- Page
     local page = Instance.new("ScrollingFrame")
     page.Size = UDim2.new(1, 0, 1, 0)
-    page.BackgroundColor3 = Theme.Bg
+    page.BackgroundTransparency = 1
     page.BorderSizePixel = 0
-    page.ScrollBarThickness = 6
+    page.ScrollBarThickness = 5
     page.ScrollBarImageColor3 = Theme.Accent
     page.CanvasSize = UDim2.new(0, 0, 0, 0)
     page.AutomaticCanvasSize = Enum.AutomaticSize.Y
@@ -603,13 +768,13 @@ local function createTab(name)
 
     local pageLayout = Instance.new("UIListLayout")
     pageLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    pageLayout.Padding = UDim.new(0, 6)
+    pageLayout.Padding = UDim.new(0, 8)
     pageLayout.Parent = page
 
     local pagePad = Instance.new("UIPadding")
-    pagePad.PaddingLeft = UDim.new(0, 20)
-    pagePad.PaddingRight = UDim.new(0, 20)
-    pagePad.PaddingTop = UDim.new(0, 16)
+    pagePad.PaddingLeft = UDim.new(0, 18)
+    pagePad.PaddingRight = UDim.new(0, 18)
+    pagePad.PaddingTop = UDim.new(0, 14)
     pagePad.PaddingBottom = UDim.new(0, 16)
     pagePad.Parent = page
 
@@ -623,11 +788,11 @@ local function createTab(name)
         local hLayout = Instance.new("UIListLayout")
         hLayout.FillDirection = Enum.FillDirection.Horizontal
         hLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        hLayout.Padding = UDim.new(0, 16)
+        hLayout.Padding = UDim.new(0, 12)
         hLayout.Parent = holder
 
         local left = Instance.new("Frame")
-        left.Size = UDim2.new(0.5, -8, 0, 0)
+        left.Size = UDim2.new(0.5, -6, 0, 0)
         left.AutomaticSize = Enum.AutomaticSize.Y
         left.BackgroundTransparency = 1
         left.LayoutOrder = 1
@@ -638,7 +803,7 @@ local function createTab(name)
         ll.Parent = left
 
         local right = Instance.new("Frame")
-        right.Size = UDim2.new(0.5, -8, 0, 0)
+        right.Size = UDim2.new(0.5, -6, 0, 0)
         right.AutomaticSize = Enum.AutomaticSize.Y
         right.BackgroundTransparency = 1
         right.LayoutOrder = 2
@@ -654,32 +819,39 @@ local function createTab(name)
     btn.MouseButton1Click:Connect(function()
         for _, t in pairs(Tabs) do
             t.Page.Visible = false
-            t.Button.BackgroundColor3 = Theme.PanelBg
-            t.Button.TextColor3 = Theme.TextDim
-            t.Stroke.Color = Theme.Border
-            t.Indicator.Visible = false
+            t.Button.BackgroundColor3 = Theme.SidePanel
+            t.Icon.TextColor3 = Theme.TextDim
+            t.Label.TextColor3 = Theme.TextDim
+            t.Bar.Visible = false
         end
         page.Visible = true
-        btn.BackgroundColor3 = Theme.Bg
-        btn.TextColor3 = Theme.AccentBright
-        btnStroke.Color = Theme.Accent
-        indicator.Visible = true
+        btn.BackgroundColor3 = Theme.CardBg
+        iconLbl.TextColor3 = Theme.AccentBright
+        label.TextColor3 = Theme.TextBright
+        bar.Visible = true
+        CurrentTabTitle.Text = string.upper(name)
+        CurrentTabSub.Text = subtitle or ""
     end)
 
     btn.MouseEnter:Connect(function()
         if not page.Visible then
-            btn.BackgroundColor3 = Theme.RowBg
-            btn.TextColor3 = Theme.Text
+            btn.BackgroundColor3 = Theme.CardBg
+            iconLbl.TextColor3 = Theme.Text
+            label.TextColor3 = Theme.Text
         end
     end)
     btn.MouseLeave:Connect(function()
         if not page.Visible then
-            btn.BackgroundColor3 = Theme.PanelBg
-            btn.TextColor3 = Theme.TextDim
+            btn.BackgroundColor3 = Theme.SidePanel
+            iconLbl.TextColor3 = Theme.TextDim
+            label.TextColor3 = Theme.TextDim
         end
     end)
 
-    local tab = { Button = btn, Page = page, makeColumns = makeColumns, Stroke = btnStroke, Indicator = indicator }
+    local tab = {
+        Button = btn, Page = page, makeColumns = makeColumns,
+        Bar = bar, Icon = iconLbl, Label = label, Name = name, Subtitle = subtitle,
+    }
     Tabs[name] = tab
     return tab
 end
@@ -688,100 +860,127 @@ end
 -- WIDGETS
 -- ============================================================
 local function createSection(parent, text)
-    local box = Instance.new("Frame")
-    box.Size = UDim2.new(1, 0, 0, 34)
-    box.BackgroundColor3 = Theme.PanelBgAlt
-    box.BorderSizePixel = 0
-    box.Parent = parent
-    stroke(box, Theme.Border, 1)
+    local row = Instance.new("Frame")
+    row.Size = UDim2.new(1, 0, 0, 30)
+    row.BackgroundTransparency = 1
+    row.Parent = parent
 
-    local leftBar = Instance.new("Frame")
-    leftBar.Size = UDim2.new(0, 3, 1, 0)
-    leftBar.BackgroundColor3 = Theme.Accent
-    leftBar.BorderSizePixel = 0
-    leftBar.Parent = box
+    local iconLbl = Instance.new("TextLabel")
+    iconLbl.Size = UDim2.fromOffset(16, 30)
+    iconLbl.BackgroundTransparency = 1
+    iconLbl.Text = "◆"
+    iconLbl.TextColor3 = Theme.Accent
+    iconLbl.Font = Theme.FontBold
+    iconLbl.TextSize = 11
+    iconLbl.Parent = row
 
     local l = Instance.new("TextLabel")
-    l.Size = UDim2.new(1, -18, 1, 0)
-    l.Position = UDim2.fromOffset(16, 0)
+    l.Size = UDim2.new(1, -22, 1, 0)
+    l.Position = UDim2.fromOffset(20, 0)
     l.BackgroundTransparency = 1
     l.Font = Theme.FontBold
-    l.TextSize = 15
-    l.TextColor3 = Theme.TextBright
+    l.TextSize = 12
+    l.TextColor3 = Theme.TextDim
     l.TextXAlignment = Enum.TextXAlignment.Left
     l.Text = string.upper(text)
-    l.Parent = box
+    l.Parent = row
 end
 
 local function createLabel(parent, text)
     local l = Instance.new("TextLabel")
-    l.Size = UDim2.new(1, 0, 0, 28)
+    l.Size = UDim2.new(1, 0, 0, 22)
     l.BackgroundTransparency = 1
     l.Font = Theme.Font
-    l.TextSize = 13
+    l.TextSize = 12
     l.TextColor3 = Theme.TextDim
     l.TextXAlignment = Enum.TextXAlignment.Left
     l.Text = text
     l.Parent = parent
     local pad = Instance.new("UIPadding")
-    pad.PaddingLeft = UDim.new(0, 10)
+    pad.PaddingLeft = UDim.new(0, 4)
     pad.Parent = l
 end
 
 local function createBindableToggle(parent, name, key)
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, 0, 0, 38)
+    row.Size = UDim2.new(1, 0, 0, 40)
     row.BackgroundColor3 = Theme.RowBg
     row.BorderSizePixel = 0
     row.Parent = parent
+    corner(row, 8)
     local rowStroke = stroke(row, Theme.Border, 1)
+
+    -- Left accent bar
+    local bar = Instance.new("Frame")
+    bar.Size = UDim2.new(0, 3, 0, 22)
+    bar.Position = UDim2.new(0, 6, 0.5, -11)
+    bar.BackgroundColor3 = Theme.Off
+    bar.BorderSizePixel = 0
+    bar.Parent = row
+    corner(bar, 2)
 
     local toggleBtn = Instance.new("TextButton")
     toggleBtn.Size = UDim2.new(1, -120, 1, 0)
+    toggleBtn.Position = UDim2.fromOffset(16, 0)
     toggleBtn.BackgroundTransparency = 1
-    toggleBtn.Font = Theme.Font
-    toggleBtn.TextSize = 14
+    toggleBtn.Font = Theme.FontSemi
+    toggleBtn.TextSize = 13
     toggleBtn.TextXAlignment = Enum.TextXAlignment.Left
-    toggleBtn.Text = ""
+    toggleBtn.Text = name
+    toggleBtn.TextColor3 = Theme.Text
     toggleBtn.AutoButtonColor = false
     toggleBtn.Parent = row
-    local tpad = Instance.new("UIPadding")
-    tpad.PaddingLeft = UDim.new(0, 16)
-    tpad.Parent = toggleBtn
 
-    local stateDot = Instance.new("Frame")
-    stateDot.Size = UDim2.fromOffset(12, 12)
-    stateDot.Position = UDim2.new(1, -110, 0.5, -6)
-    stateDot.BackgroundColor3 = Theme.Off
-    stateDot.BorderSizePixel = 0
-    stateDot.Parent = row
-    Instance.new("UICorner", stateDot).CornerRadius = UDim.new(1, 0)
+    -- Small "toggle switch"
+    local switch = Instance.new("Frame")
+    switch.Size = UDim2.fromOffset(34, 18)
+    switch.Position = UDim2.new(1, -110, 0.5, -9)
+    switch.BackgroundColor3 = Theme.Off
+    switch.BorderSizePixel = 0
+    switch.Parent = row
+    corner(switch, 9)
+
+    local knob = Instance.new("Frame")
+    knob.Size = UDim2.fromOffset(12, 12)
+    knob.Position = UDim2.fromOffset(3, 3)
+    knob.BackgroundColor3 = Theme.TextBright
+    knob.BorderSizePixel = 0
+    knob.Parent = switch
+    corner(knob, 6)
 
     local bindBtn = Instance.new("TextButton")
-    bindBtn.Size = UDim2.fromOffset(92, 28)
-    bindBtn.Position = UDim2.new(1, -92, 0.5, -14)
-    bindBtn.BackgroundColor3 = Theme.PanelBg
+    bindBtn.Size = UDim2.fromOffset(72, 24)
+    bindBtn.Position = UDim2.new(1, -72, 0.5, -12)
+    bindBtn.BackgroundColor3 = Theme.CardBg
     bindBtn.TextColor3 = Theme.TextDim
-    bindBtn.Font = Theme.Font
-    bindBtn.TextSize = 12
+    bindBtn.Font = Theme.FontSemi
+    bindBtn.TextSize = 11
     bindBtn.Text = ""
     bindBtn.AutoButtonColor = false
     bindBtn.Parent = row
+    corner(bindBtn, 6)
     stroke(bindBtn, Theme.Border, 1)
 
     local function refresh()
         local on = S[key]
-        toggleBtn.Text = name
         toggleBtn.TextColor3 = on and Theme.TextBright or Theme.TextDim
-        stateDot.BackgroundColor3 = on and Theme.On or Theme.Off
-        rowStroke.Color = on and Theme.BorderBright or Theme.Border
+        switch.BackgroundColor3 = on and Theme.On or Theme.Off
+        bar.BackgroundColor3 = on and Theme.AccentBright or Theme.Off
+        rowStroke.Color = on and Theme.BorderHot or Theme.Border
+        if on then
+            knob.Position = UDim2.new(1, -15, 0.5, -6)
+        else
+            knob.Position = UDim2.fromOffset(3, 3)
+        end
         local kb = Binds[key]
         if kb then
             bindBtn.Text = kb.Name
             bindBtn.TextColor3 = Theme.AccentBright
+            bindBtn.BackgroundColor3 = Theme.AccentDeep
         else
             bindBtn.Text = "—"
             bindBtn.TextColor3 = Theme.TextDim
+            bindBtn.BackgroundColor3 = Theme.CardBg
         end
     end
     refresh()
@@ -816,19 +1015,20 @@ end
 
 local function createValueRow(parent, label, getV, dec, inc)
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, 0, 0, 34)
+    row.Size = UDim2.new(1, 0, 0, 40)
     row.BackgroundColor3 = Theme.RowBg
     row.BorderSizePixel = 0
     row.Parent = parent
+    corner(row, 8)
     stroke(row, Theme.Border, 1)
 
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -140, 1, 0)
+    lbl.Size = UDim2.new(1, -110, 1, 0)
     lbl.Position = UDim2.fromOffset(16, 0)
     lbl.BackgroundTransparency = 1
     lbl.TextColor3 = Theme.Text
-    lbl.Font = Theme.Font
-    lbl.TextSize = 14
+    lbl.Font = Theme.FontSemi
+    lbl.TextSize = 13
     lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.Parent = row
 
@@ -836,54 +1036,75 @@ local function createValueRow(parent, label, getV, dec, inc)
     upd()
 
     local minus = Instance.new("TextButton")
-    minus.Size = UDim2.fromOffset(30, 24)
-    minus.Position = UDim2.new(1, -70, 0.5, -12)
-    minus.BackgroundColor3 = Theme.PanelBg
-    minus.Text = "-"
+    minus.Size = UDim2.fromOffset(32, 26)
+    minus.Position = UDim2.new(1, -74, 0.5, -13)
+    minus.BackgroundColor3 = Theme.CardBg
+    minus.Text = "−"
     minus.TextColor3 = Theme.Text
     minus.Font = Theme.FontBold
     minus.TextSize = 15
     minus.AutoButtonColor = false
     minus.Parent = row
+    corner(minus, 6)
     stroke(minus, Theme.Border, 1)
 
     local plus = Instance.new("TextButton")
-    plus.Size = UDim2.fromOffset(30, 24)
-    plus.Position = UDim2.new(1, -36, 0.5, -12)
-    plus.BackgroundColor3 = Theme.PanelBg
+    plus.Size = UDim2.fromOffset(32, 26)
+    plus.Position = UDim2.new(1, -38, 0.5, -13)
+    plus.BackgroundColor3 = Theme.CardBg
     plus.Text = "+"
     plus.TextColor3 = Theme.Text
     plus.Font = Theme.FontBold
     plus.TextSize = 15
     plus.AutoButtonColor = false
     plus.Parent = row
+    corner(plus, 6)
     stroke(plus, Theme.Border, 1)
 
     minus.MouseButton1Click:Connect(function() dec(); upd() end)
     plus.MouseButton1Click:Connect(function() inc(); upd() end)
 
-    minus.MouseEnter:Connect(function() minus.BackgroundColor3 = Theme.AccentDim end)
-    minus.MouseLeave:Connect(function() minus.BackgroundColor3 = Theme.PanelBg end)
-    plus.MouseEnter:Connect(function() plus.BackgroundColor3 = Theme.AccentDim end)
-    plus.MouseLeave:Connect(function() plus.BackgroundColor3 = Theme.PanelBg end)
+    minus.MouseEnter:Connect(function()
+        minus.BackgroundColor3 = Theme.AccentDeep
+        minus.TextColor3 = Theme.AccentBright
+    end)
+    minus.MouseLeave:Connect(function()
+        minus.BackgroundColor3 = Theme.CardBg
+        minus.TextColor3 = Theme.Text
+    end)
+    plus.MouseEnter:Connect(function()
+        plus.BackgroundColor3 = Theme.AccentDeep
+        plus.TextColor3 = Theme.AccentBright
+    end)
+    plus.MouseLeave:Connect(function()
+        plus.BackgroundColor3 = Theme.CardBg
+        plus.TextColor3 = Theme.Text
+    end)
 
     table.insert(UIWidgets, upd)
 end
 
 local function createTextButton(parent, text, cb, bg)
     local b = Instance.new("TextButton")
-    b.Size = UDim2.new(1, 0, 0, 32)
-    b.BackgroundColor3 = bg or Theme.PanelBg
+    b.Size = UDim2.new(1, 0, 0, 34)
+    b.BackgroundColor3 = bg or Theme.CardBg
     b.Text = text
     b.TextColor3 = Theme.Text
-    b.Font = Theme.Font
+    b.Font = Theme.FontSemi
     b.TextSize = 13
     b.AutoButtonColor = false
     b.Parent = parent
+    corner(b, 8)
     stroke(b, Theme.Border, 1)
     b.MouseButton1Click:Connect(cb)
-    b.MouseEnter:Connect(function() b.BackgroundColor3 = Theme.RowBgHover end)
-    b.MouseLeave:Connect(function() b.BackgroundColor3 = bg or Theme.PanelBg end)
+    b.MouseEnter:Connect(function()
+        b.BackgroundColor3 = Theme.RowBgHover
+        b.TextColor3 = Theme.TextBright
+    end)
+    b.MouseLeave:Connect(function()
+        b.BackgroundColor3 = bg or Theme.CardBg
+        b.TextColor3 = Theme.Text
+    end)
     return b
 end
 
@@ -892,10 +1113,11 @@ end
 -- ============================================================
 local function createColorPicker(parent, labelText, getColor, setColor)
     local holder = Instance.new("Frame")
-    holder.Size = UDim2.new(1, 0, 0, 34)
+    holder.Size = UDim2.new(1, 0, 0, 40)
     holder.BackgroundColor3 = Theme.RowBg
     holder.BorderSizePixel = 0
     holder.Parent = parent
+    corner(holder, 8)
     stroke(holder, Theme.Border, 1)
 
     local lbl = Instance.new("TextLabel")
@@ -903,54 +1125,60 @@ local function createColorPicker(parent, labelText, getColor, setColor)
     lbl.Position = UDim2.fromOffset(16, 0)
     lbl.BackgroundTransparency = 1
     lbl.TextColor3 = Theme.Text
-    lbl.Font = Theme.Font
-    lbl.TextSize = 14
+    lbl.Font = Theme.FontSemi
+    lbl.TextSize = 13
     lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.Text = labelText
     lbl.Parent = holder
 
     local preview = Instance.new("Frame")
-    preview.Size = UDim2.fromOffset(72, 22)
-    preview.Position = UDim2.new(1, -82, 0.5, -11)
+    preview.Size = UDim2.fromOffset(64, 22)
+    preview.Position = UDim2.new(1, -76, 0.5, -11)
     preview.BackgroundColor3 = getColor()
     preview.BorderSizePixel = 0
     preview.Parent = holder
-    stroke(preview, Theme.BorderBright, 1)
+    corner(preview, 6)
+    stroke(preview, Theme.BorderSoft, 1)
 
     local popup = Instance.new("Frame")
-    popup.Size = UDim2.fromOffset(340, 340)
+    popup.Size = UDim2.fromOffset(340, 360)
     popup.Position = UDim2.fromScale(0.5, 0.5)
     popup.AnchorPoint = Vector2.new(0.5, 0.5)
-    popup.BackgroundColor3 = Theme.PanelBg
+    popup.BackgroundColor3 = Theme.CardBg
     popup.BorderSizePixel = 0
     popup.Visible = false
     popup.ZIndex = 50
     popup.Parent = Menu
-    stroke(popup, Theme.Accent, 2)
+    corner(popup, 10)
+    softShadow(popup, 0.5, 14)
+    stroke(popup, Theme.BorderHot, 1)
 
     local pTitle = Instance.new("TextLabel")
-    pTitle.Size = UDim2.new(1, 0, 0, 36)
-    pTitle.BackgroundColor3 = Theme.BgDeep
+    pTitle.Size = UDim2.new(1, 0, 0, 40)
+    pTitle.BackgroundColor3 = Theme.SidePanel
     pTitle.BorderSizePixel = 0
-    pTitle.Text = labelText
-    pTitle.TextColor3 = Theme.AccentBright
+    pTitle.Text = "  " .. labelText
+    pTitle.TextColor3 = Theme.TextBright
     pTitle.Font = Theme.FontBold
-    pTitle.TextSize = 14
+    pTitle.TextSize = 13
+    pTitle.TextXAlignment = Enum.TextXAlignment.Left
     pTitle.ZIndex = 51
     pTitle.Parent = popup
+    corner(pTitle, 10)
 
     local closeBtn = Instance.new("TextButton")
-    closeBtn.Size = UDim2.fromOffset(30, 28)
-    closeBtn.Position = UDim2.new(1, -34, 0, 4)
-    closeBtn.BackgroundColor3 = Theme.AccentDim
-    closeBtn.Text = "X"
-    closeBtn.TextColor3 = Theme.TextBright
+    closeBtn.Size = UDim2.fromOffset(28, 26)
+    closeBtn.Position = UDim2.new(1, -36, 0, 7)
+    closeBtn.BackgroundColor3 = Theme.AccentDeep
+    closeBtn.Text = "×"
+    closeBtn.TextColor3 = Theme.AccentBright
     closeBtn.Font = Theme.FontBold
-    closeBtn.TextSize = 13
+    closeBtn.TextSize = 16
     closeBtn.AutoButtonColor = false
     closeBtn.ZIndex = 52
     closeBtn.Parent = popup
-    stroke(closeBtn, Theme.Accent, 1)
+    corner(closeBtn, 6)
+    stroke(closeBtn, Theme.BorderHot, 1)
 
     local state = { r = math.floor(getColor().R * 255), g = math.floor(getColor().G * 255), b = math.floor(getColor().B * 255) }
 
@@ -965,7 +1193,7 @@ local function createColorPicker(parent, labelText, getColor, setColor)
     local function makeSlider(name, y, key)
         local label = Instance.new("TextLabel")
         label.Size = UDim2.new(0, 30, 0, 22)
-        label.Position = UDim2.fromOffset(18, y + 4)
+        label.Position = UDim2.fromOffset(20, y + 4)
         label.BackgroundTransparency = 1
         label.Text = name
         label.TextColor3 = Theme.Text
@@ -976,22 +1204,23 @@ local function createColorPicker(parent, labelText, getColor, setColor)
 
         local valueLbl = Instance.new("TextLabel")
         valueLbl.Size = UDim2.new(0, 46, 0, 22)
-        valueLbl.Position = UDim2.new(1, -64, 0, y + 4)
+        valueLbl.Position = UDim2.new(1, -66, 0, y + 4)
         valueLbl.BackgroundTransparency = 1
         valueLbl.Text = tostring(state[key])
         valueLbl.TextColor3 = Theme.TextBright
-        valueLbl.Font = Theme.Font
+        valueLbl.Font = Theme.FontSemi
         valueLbl.TextSize = 13
         valueLbl.ZIndex = 51
         valueLbl.Parent = popup
 
         local sliderBg = Instance.new("Frame")
-        sliderBg.Size = UDim2.new(1, -120, 0, 14)
-        sliderBg.Position = UDim2.fromOffset(60, y + 8)
-        sliderBg.BackgroundColor3 = Theme.RowBg
+        sliderBg.Size = UDim2.new(1, -120, 0, 10)
+        sliderBg.Position = UDim2.fromOffset(62, y + 10)
+        sliderBg.BackgroundColor3 = Theme.BgDeep
         sliderBg.BorderSizePixel = 0
         sliderBg.ZIndex = 51
         sliderBg.Parent = popup
+        corner(sliderBg, 5)
         stroke(sliderBg, Theme.Border, 1)
 
         local fill = Instance.new("Frame")
@@ -1000,6 +1229,7 @@ local function createColorPicker(parent, labelText, getColor, setColor)
         fill.BorderSizePixel = 0
         fill.ZIndex = 52
         fill.Parent = sliderBg
+        corner(fill, 5)
 
         sliderRefs[key] = { fill = fill, valueLbl = valueLbl }
 
@@ -1041,12 +1271,12 @@ local function createColorPicker(parent, labelText, getColor, setColor)
 
     local presetsTitle = Instance.new("TextLabel")
     presetsTitle.Size = UDim2.new(1, -20, 0, 22)
-    presetsTitle.Position = UDim2.fromOffset(14, 196)
+    presetsTitle.Position = UDim2.fromOffset(16, 200)
     presetsTitle.BackgroundTransparency = 1
     presetsTitle.Text = "PRESETS"
     presetsTitle.TextColor3 = Theme.TextDim
     presetsTitle.Font = Theme.FontBold
-    presetsTitle.TextSize = 12
+    presetsTitle.TextSize = 11
     presetsTitle.ZIndex = 51
     presetsTitle.Parent = popup
 
@@ -1061,15 +1291,16 @@ local function createColorPicker(parent, labelText, getColor, setColor)
         local col = (i - 1) % 6
         local row = math.floor((i - 1) / 6)
         local swatch = Instance.new("TextButton")
-        swatch.Size = UDim2.fromOffset(46, 36)
-        swatch.Position = UDim2.fromOffset(16 + col * 52, 222 + row * 42)
+        swatch.Size = UDim2.fromOffset(46, 34)
+        swatch.Position = UDim2.fromOffset(18 + col * 52, 226 + row * 42)
         swatch.BackgroundColor3 = c
         swatch.Text = ""
         swatch.BorderSizePixel = 0
         swatch.AutoButtonColor = false
         swatch.ZIndex = 51
         swatch.Parent = popup
-        stroke(swatch, Theme.BorderBright, 1)
+        corner(swatch, 6)
+        stroke(swatch, Theme.BorderSoft, 1)
 
         swatch.MouseButton1Click:Connect(function()
             state.r = math.floor(c.R * 255)
@@ -1111,15 +1342,15 @@ end
 -- ============================================================
 -- CREATE TABS
 -- ============================================================
-local RageTab = createTab("RAGE")
-local VisTab = createTab("VISUALS")
-local AimTab = createTab("AIM")
-local MoveTab = createTab("MOVEMENT")
-local AATab = createTab("ANTI-AIM")
-local CamTab = createTab("CAMERA")
-local TracerTab = createTab("TRACERS")
-local CurrencyTab = createTab("CURRENCY")
-local ConfigTab = createTab("CONFIGS")
+local RageTab = createTab("Rage", "✦", "rage aimbot · auto shoot · silent aim")
+local VisTab = createTab("Visuals", "◉", "esp · chams · skeleton · colors")
+local AimTab = createTab("Aim", "⊕", "aimbot · tuning · hitboxes")
+local MoveTab = createTab("Movement", "➤", "bhop · speed · fly · noclip")
+local AATab = createTab("Anti-Aim", "⟲", "spin · jitter · pitch")
+local CamTab = createTab("Camera", "▣", "third person · ui scale")
+local TracerTab = createTab("Tracers", "═", "bullet tracers")
+local CurrencyTab = createTab("Currency", "$", "remote scanner · auto fire")
+local ConfigTab = createTab("Configs", "⚙", "save and load settings")
 
 -- RAGE TAB
 do
@@ -1130,23 +1361,23 @@ do
     createBindableToggle(left, "Wall Check", "RageWallCheck")
     createBindableToggle(left, "Ignore Teammates", "IgnoreTeammates")
 
-    createSection(left, "Rage Settings")
+    createSection(left, "Settings")
     createValueRow(left, "Rage FOV", function() return S.RageFOV end,
         function() S.RageFOV = math.clamp(S.RageFOV - 10, 10, 360) end,
         function() S.RageFOV = math.clamp(S.RageFOV + 10, 10, 360) end)
     createValueRow(left, "Max Distance", function() return S.RageMaxDistance end,
         function() S.RageMaxDistance = math.clamp(S.RageMaxDistance - 25, 50, 2000) end,
         function() S.RageMaxDistance = math.clamp(S.RageMaxDistance + 25, 50, 2000) end)
-    createValueRow(left, "Shoot Delay ms", function() return math.floor(S.RageShootDelay * 1000) end,
+    createValueRow(left, "Shoot Delay", function() return math.floor(S.RageShootDelay * 1000) .. "ms" end,
         function() S.RageShootDelay = math.clamp(S.RageShootDelay - 0.01, 0.01, 1.0) end,
         function() S.RageShootDelay = math.clamp(S.RageShootDelay + 0.01, 0.01, 1.0) end)
-    createValueRow(left, "Fire Angle", function() return S.RageFireAngle end,
+    createValueRow(left, "Fire Angle", function() return S.RageFireAngle .. "°" end,
         function() S.RageFireAngle = math.clamp(S.RageFireAngle - 0.5, 0.5, 30) end,
         function() S.RageFireAngle = math.clamp(S.RageFireAngle + 0.5, 0.5, 30) end)
     createValueRow(left, "Lock Frames", function() return S.RageLockFrames end,
         function() S.RageLockFrames = math.clamp(S.RageLockFrames - 1, 1, 10) end,
         function() S.RageLockFrames = math.clamp(S.RageLockFrames + 1, 1, 10) end)
-    createValueRow(left, "Prediction ms", function() return math.floor(S.RagePrediction * 1000) end,
+    createValueRow(left, "Prediction", function() return math.floor(S.RagePrediction * 1000) .. "ms" end,
         function() S.RagePrediction = math.clamp(S.RagePrediction - 0.005, 0, 0.1) end,
         function() S.RagePrediction = math.clamp(S.RagePrediction + 0.005, 0, 0.1) end)
     createBindableToggle(left, "Adaptive Lead", "RageAdaptiveLead")
@@ -1159,22 +1390,17 @@ do
         i = i % #o + 1
         S.RageHitbox = o[i]
         rb.Text = "Hitbox: " .. S.RageHitbox
-    end, Theme.PanelBg)
-
-    createSection(left, "Diagnostic")
-    createTextButton(left, "[ * ] Inspect All Players", function()
-        inspectAllPlayers()
-    end, Theme.PanelBg)
+    end, Theme.CardBg)
 
     createSection(right, "Silent Aim")
     createBindableToggle(right, "Silent Aim", "SilentAim")
     createValueRow(right, "SA FOV", function() return S.SilentAimFOV end,
         function() S.SilentAimFOV = math.clamp(S.SilentAimFOV - 10, 10, 360) end,
         function() S.SilentAimFOV = math.clamp(S.SilentAimFOV + 10, 10, 360) end)
-    createValueRow(right, "SA Angle", function() return S.SilentAimAngleThreshold end,
+    createValueRow(right, "SA Angle", function() return S.SilentAimAngleThreshold .. "°" end,
         function() S.SilentAimAngleThreshold = math.clamp(S.SilentAimAngleThreshold - 1, 1, 30) end,
         function() S.SilentAimAngleThreshold = math.clamp(S.SilentAimAngleThreshold + 1, 1, 30) end)
-    createValueRow(right, "SA Settle ms", function() return math.floor(S.SilentAimSettle * 1000) end,
+    createValueRow(right, "SA Settle", function() return math.floor(S.SilentAimSettle * 1000) .. "ms" end,
         function() S.SilentAimSettle = math.clamp(S.SilentAimSettle - 0.01, 0, 0.2) end,
         function() S.SilentAimSettle = math.clamp(S.SilentAimSettle + 0.01, 0, 0.2) end)
 
@@ -1186,7 +1412,12 @@ do
         i = i % #o + 1
         S.SilentAimHitbox = o[i]
         saHB.Text = "SA Hitbox: " .. S.SilentAimHitbox
-    end, Theme.PanelBg)
+    end, Theme.CardBg)
+
+    createSection(right, "Diagnostic")
+    createTextButton(right, "Inspect All Players", function()
+        inspectAllPlayers()
+    end, Theme.CardBg)
 end
 
 -- VISUALS TAB
@@ -1211,7 +1442,7 @@ do
         function(c) S.ChamsColor = c end)
 end
 
--- AIM TAB (now includes hitboxes)
+-- AIM TAB
 do
     local left, right = AimTab.makeColumns()
     createSection(left, "Aimbot")
@@ -1231,7 +1462,7 @@ do
     createValueRow(right, "Smoothing", function() return string.format("%.2f", S.AimSmoothing) end,
         function() S.AimSmoothing = math.clamp(S.AimSmoothing - 0.05, 0.05, 1.0) end,
         function() S.AimSmoothing = math.clamp(S.AimSmoothing + 0.05, 0.05, 1.0) end)
-    createValueRow(right, "MaxPx/Frame", function() return S.AimMaxDelta end,
+    createValueRow(right, "Max Px/Frame", function() return S.AimMaxDelta end,
         function() S.AimMaxDelta = math.clamp(S.AimMaxDelta - 5, 1, 200) end,
         function() S.AimMaxDelta = math.clamp(S.AimMaxDelta + 5, 1, 200) end)
 end
@@ -1249,17 +1480,17 @@ do
     createBindableToggle(left, "Jump Power Hack", "JumpPowerHack")
     createBindableToggle(left, "Fly (Hold F)", "Fly")
 
-    createSection(right, "Speed Tuning")
+    createSection(right, "Speed")
     createValueRow(right, "Walk Speed", function() return S.SpeedValue end,
         function() S.SpeedValue = math.clamp(S.SpeedValue - 5, 16, 500) end,
         function() S.SpeedValue = math.clamp(S.SpeedValue + 5, 16, 500) end)
 
-    createSection(right, "Jump Tuning")
+    createSection(right, "Jump")
     createValueRow(right, "Jump Power", function() return S.JumpPowerValue end,
         function() S.JumpPowerValue = math.clamp(S.JumpPowerValue - 10, 50, 500) end,
         function() S.JumpPowerValue = math.clamp(S.JumpPowerValue + 10, 50, 500) end)
 
-    createSection(right, "Fly Tuning")
+    createSection(right, "Fly")
     createValueRow(right, "Fly Speed", function() return S.FlySpeed end,
         function() S.FlySpeed = math.clamp(S.FlySpeed - 5, 5, 300) end,
         function() S.FlySpeed = math.clamp(S.FlySpeed + 5, 5, 300) end)
@@ -1268,23 +1499,22 @@ end
 -- ANTI-AIM TAB
 do
     local left, right = AATab.makeColumns()
-
     createSection(left, "Anti-Aim")
     createBindableToggle(left, "Anti-Aim Master", "AntiAim")
     createBindableToggle(left, "Spin Body", "AASpinBody")
     createBindableToggle(left, "Spin Head Only", "AASpinHead")
     createBindableToggle(left, "Jitter Mode", "AAJitter")
 
-    createSection(right, "Spin Tuning")
-    createValueRow(right, "Spin Speed", function() return S.AASpinSpeed end,
+    createSection(right, "Spin")
+    createValueRow(right, "Spin Speed", function() return S.AASpinSpeed .. "°" end,
         function() S.AASpinSpeed = math.clamp(S.AASpinSpeed - 5, 1, 180) end,
         function() S.AASpinSpeed = math.clamp(S.AASpinSpeed + 5, 1, 180) end)
 
-    createSection(right, "Head Fake Angles")
-    createValueRow(right, "Head Pitch", function() return S.AAHeadPitch end,
+    createSection(right, "Head Fake")
+    createValueRow(right, "Head Pitch", function() return S.AAHeadPitch .. "°" end,
         function() S.AAHeadPitch = math.clamp(S.AAHeadPitch - 5, -89, 89) end,
         function() S.AAHeadPitch = math.clamp(S.AAHeadPitch + 5, -89, 89) end)
-    createValueRow(right, "Head Roll", function() return S.AAHeadRoll end,
+    createValueRow(right, "Head Roll", function() return S.AAHeadRoll .. "°" end,
         function() S.AAHeadRoll = math.clamp(S.AAHeadRoll - 5, -89, 89) end,
         function() S.AAHeadRoll = math.clamp(S.AAHeadRoll + 5, -89, 89) end)
 
@@ -1299,18 +1529,18 @@ do
         idx = idx % #modes + 1
         S.AAPitchMode = modes[idx]
         pitchBtn.Text = "Pitch Mode: " .. S.AAPitchMode
-    end, Theme.PanelBg)
+    end, Theme.CardBg)
 
-    createValueRow(right, "Pitch Angle", function() return S.AAPitchAngle end,
+    createValueRow(right, "Pitch Angle", function() return S.AAPitchAngle .. "°" end,
         function() S.AAPitchAngle = math.clamp(S.AAPitchAngle - 5, 30, 89) end,
         function() S.AAPitchAngle = math.clamp(S.AAPitchAngle + 5, 30, 89) end)
 
-    createValueRow(right, "Flip Speed ms", function() return math.floor(S.AAPitchFlipSpeed * 1000) end,
+    createValueRow(right, "Flip Speed", function() return math.floor(S.AAPitchFlipSpeed * 1000) .. "ms" end,
         function() S.AAPitchFlipSpeed = math.clamp(S.AAPitchFlipSpeed - 0.01, 0.01, 1.0) end,
         function() S.AAPitchFlipSpeed = math.clamp(S.AAPitchFlipSpeed + 0.01, 0.01, 1.0) end)
 end
 
--- CAMERA TAB (with UI Scale)
+-- CAMERA TAB
 do
     local left, right = CamTab.makeColumns()
     createSection(left, "Camera")
@@ -1336,7 +1566,7 @@ do
         function() S.ThirdPersonSmoothSpeed = math.clamp(S.ThirdPersonSmoothSpeed + 0.05, 0.05, 1.0) end)
 
     createSection(right, "UI Scale")
-    createValueRow(right, "Menu Scale %", function() return S.UIScale end,
+    createValueRow(right, "Menu Scale", function() return S.UIScale .. "%" end,
         function()
             S.UIScale = math.clamp(S.UIScale - 5, 25, 200)
             menuScale.Scale = S.UIScale / 100
@@ -1345,7 +1575,7 @@ do
             S.UIScale = math.clamp(S.UIScale + 5, 25, 200)
             menuScale.Scale = S.UIScale / 100
         end)
-    createLabel(right, "Range: 25% - 200%  ·  affects whole menu")
+    createLabel(right, "Range: 25% – 200%  ·  scales the whole menu")
 end
 
 -- TRACERS TAB
@@ -1355,10 +1585,10 @@ do
     createBindableToggle(left, "Enable Tracers", "Tracers")
 
     createSection(right, "Settings")
-    createValueRow(right, "Lifetime (sec)", function() return S.TracerLifetime end,
+    createValueRow(right, "Lifetime", function() return S.TracerLifetime .. "s" end,
         function() S.TracerLifetime = math.clamp(S.TracerLifetime - 1, 0, 15) end,
         function() S.TracerLifetime = math.clamp(S.TracerLifetime + 1, 0, 15) end)
-    createValueRow(right, "Thickness (px)", function() return S.TracerThickness end,
+    createValueRow(right, "Thickness", function() return S.TracerThickness .. "px" end,
         function() S.TracerThickness = math.clamp(S.TracerThickness - 1, 1, 10) end,
         function() S.TracerThickness = math.clamp(S.TracerThickness + 1, 1, 10) end)
     createColorPicker(right, "Tracer Color", function() return S.TracerColor end,
@@ -1370,7 +1600,7 @@ do
     local left, right = CurrencyTab.makeColumns()
 
     createSection(left, "Remote Scanner")
-    createTextButton(left, "[ * ] Scan All Remotes", function()
+    createTextButton(left, "Scan All Remotes", function()
         print("========================================")
         print("=== REMOTE SCANNER ===")
         local results = {}
@@ -1382,9 +1612,9 @@ do
         end
         print(string.format("Total remotes found: %d", #results))
         print("========================================")
-    end, Theme.PanelBg)
+    end, Theme.CardBg)
 
-    createTextButton(left, "[ $ ] Scan Money-Related", function()
+    createTextButton(left, "Scan Money-Related", function()
         print("========================================")
         print("=== MONEY-RELATED REMOTES ===")
         local keywords = { "cash", "money", "coin", "reward", "buy", "purchase", "claim", "earn", "shop", "sell", "credit", "gem", "gold", "point" }
@@ -1403,20 +1633,21 @@ do
         end
         print(string.format("Money-related remotes: %d", count))
         print("========================================")
-    end, Theme.PanelBg)
+    end, Theme.CardBg)
 
     createSection(left, "Target")
     local targetBox = Instance.new("TextBox")
-    targetBox.Size = UDim2.new(1, 0, 0, 32)
+    targetBox.Size = UDim2.new(1, 0, 0, 34)
     targetBox.BackgroundColor3 = Theme.RowBg
     targetBox.TextColor3 = Theme.Text
     targetBox.PlaceholderText = "Full path of remote..."
     targetBox.PlaceholderColor3 = Theme.TextDim
     targetBox.Font = Theme.Font
-    targetBox.TextSize = 13
+    targetBox.TextSize = 12
     targetBox.Text = S.CurrencyTargetPath
     targetBox.ClearTextOnFocus = false
     targetBox.Parent = left
+    corner(targetBox, 8)
     stroke(targetBox, Theme.Border, 1)
     targetBox:GetPropertyChangedSignal("Text"):Connect(function()
         S.CurrencyTargetPath = targetBox.Text
@@ -1424,23 +1655,24 @@ do
 
     createSection(left, "Arguments")
     local argsBox = Instance.new("TextBox")
-    argsBox.Size = UDim2.new(1, 0, 0, 32)
+    argsBox.Size = UDim2.new(1, 0, 0, 34)
     argsBox.BackgroundColor3 = Theme.RowBg
     argsBox.TextColor3 = Theme.Text
     argsBox.PlaceholderText = "1, 100, \"text\", true..."
     argsBox.PlaceholderColor3 = Theme.TextDim
     argsBox.Font = Theme.Font
-    argsBox.TextSize = 13
+    argsBox.TextSize = 12
     argsBox.Text = S.CurrencyArgs
     argsBox.ClearTextOnFocus = false
     argsBox.Parent = left
+    corner(argsBox, 8)
     stroke(argsBox, Theme.Border, 1)
     argsBox:GetPropertyChangedSignal("Text"):Connect(function()
         S.CurrencyArgs = argsBox.Text
     end)
 
     createSection(left, "Manual Fire")
-    createTextButton(left, "[ > ] Fire Once", function()
+    createTextButton(left, "Fire Once", function()
         local path = S.CurrencyTargetPath
         if not path or path == "" then
             warn("[Currency] No target path set")
@@ -1480,31 +1712,31 @@ do
             end
         end)
         print("[Currency] Fired", remote:GetFullName(), success and "OK" or "FAILED")
-    end, Theme.PanelBg)
+    end, Theme.CardBg)
 
     createSection(right, "Auto Fire")
     createBindableToggle(right, "Auto Fire Loop", "CurrencyAutoFire")
 
-    createValueRow(right, "Fire Rate/sec", function() return S.CurrencyFireRate end,
+    createValueRow(right, "Fire Rate", function() return S.CurrencyFireRate .. "/s" end,
         function() S.CurrencyFireRate = math.clamp(S.CurrencyFireRate - 5, 1, 100) end,
         function() S.CurrencyFireRate = math.clamp(S.CurrencyFireRate + 5, 1, 100) end)
 
-    createTextButton(right, "[ X ] Stop All", function()
+    createTextButton(right, "Stop Auto-Fire", function()
         S.CurrencyAutoFire = false
         print("[Currency] Auto-fire stopped")
-    end, Theme.PanelBg)
+    end, Theme.CardBg)
 
-    createSection(right, "Info")
+    createSection(right, "How To")
     createLabel(right, "1. Scan remotes")
     createLabel(right, "2. Copy full path")
-    createLabel(right, "3. Paste in Target")
+    createLabel(right, "3. Paste into Target")
     createLabel(right, "4. Add args (optional)")
     createLabel(right, "5. Fire Once to test")
-    createLabel(right, "6. Auto Fire to spam")
+    createLabel(right, "6. Enable Auto Fire")
 
     createSection(right, "Warning")
     createLabel(right, "Only works on games with no")
-    createLabel(right, "server validation / rate limit.")
+    createLabel(right, "server validation or rate limit.")
 end
 
 -- CONFIGS TAB
@@ -1513,38 +1745,39 @@ do
 
     createSection(left, "Config Name")
     local nameBox = Instance.new("TextBox")
-    nameBox.Size = UDim2.new(1, 0, 0, 34)
+    nameBox.Size = UDim2.new(1, 0, 0, 36)
     nameBox.BackgroundColor3 = Theme.RowBg
     nameBox.TextColor3 = Theme.Text
     nameBox.PlaceholderText = "Enter config name..."
     nameBox.PlaceholderColor3 = Theme.TextDim
     nameBox.Font = Theme.Font
-    nameBox.TextSize = 13
+    nameBox.TextSize = 12
     nameBox.Text = ""
     nameBox.ClearTextOnFocus = false
     nameBox.Parent = left
+    corner(nameBox, 8)
     stroke(nameBox, Theme.Border, 1)
 
     createSection(left, "Actions")
-    createTextButton(left, "[ + ] Create New Config", function()
+    createTextButton(left, "Create New Config", function()
         local n = nameBox.Text
         if n and n ~= "" then
             createConfig(n)
             if ConfigUI.refreshList then ConfigUI.refreshList() end
             nameBox.Text = ""
         end
-    end, Theme.PanelBg)
+    end, Theme.CardBg)
 
-    createTextButton(left, "[ S ] Save Current Settings", function()
+    createTextButton(left, "Save Current Settings", function()
         local n = nameBox.Text
         if n and n ~= "" then
             saveCurrentToConfig(n)
             if ConfigUI.refreshList then ConfigUI.refreshList() end
             nameBox.Text = ""
         end
-    end, Theme.PanelBg)
+    end, Theme.CardBg)
 
-    createTextButton(left, "[ L ] Load Config", function()
+    createTextButton(left, "Load Config", function()
         local n = nameBox.Text
         if n and n ~= "" and Configs[n] then
             loadConfig(n)
@@ -1552,9 +1785,9 @@ do
             if ConfigUI.refreshAll then ConfigUI.refreshAll() end
             menuScale.Scale = (S.UIScale or 100) / 100
         end
-    end, Theme.PanelBg)
+    end, Theme.CardBg)
 
-    createTextButton(left, "[ - ] Delete Config", function()
+    createTextButton(left, "Delete Config", function()
         local n = nameBox.Text
         if n and n ~= "" then
             deleteConfig(n)
@@ -1562,19 +1795,20 @@ do
             if ConfigUI.refreshList then ConfigUI.refreshList() end
             nameBox.Text = ""
         end
-    end, Theme.PanelBg)
+    end, Theme.CardBg)
 
     createSection(left, "Debug")
-    createTextButton(left, "[ i ] Inspect Players (F9)", function()
+    createTextButton(left, "Inspect Players (F9)", function()
         inspectAllPlayers()
-    end, Theme.PanelBg)
+    end, Theme.CardBg)
 
     createSection(right, "Saved Configs")
     local configListFrame = Instance.new("Frame")
-    configListFrame.Size = UDim2.new(1, 0, 0, 480)
+    configListFrame.Size = UDim2.new(1, 0, 0, 440)
     configListFrame.BackgroundColor3 = Theme.RowBg
     configListFrame.BorderSizePixel = 0
     configListFrame.Parent = right
+    corner(configListFrame, 8)
     stroke(configListFrame, Theme.Border, 1)
 
     local listScroll = Instance.new("ScrollingFrame")
@@ -1602,15 +1836,16 @@ do
             count = count + 1
             local row = Instance.new("TextButton")
             row.Size = UDim2.new(1, 0, 0, 32)
-            row.BackgroundColor3 = (SelectedConfig == name) and Theme.AccentDim or Theme.PanelBg
-            row.Text = (SelectedConfig == name) and ("  > " .. name) or ("    " .. name)
+            row.BackgroundColor3 = (SelectedConfig == name) and Theme.AccentDeep or Theme.CardBg
+            row.Text = (SelectedConfig == name) and ("  › " .. name) or ("    " .. name)
             row.TextColor3 = (SelectedConfig == name) and Theme.AccentBright or Theme.Text
-            row.Font = Theme.Font
-            row.TextSize = 13
+            row.Font = Theme.FontSemi
+            row.TextSize = 12
             row.TextXAlignment = Enum.TextXAlignment.Left
             row.AutoButtonColor = false
             row.Parent = listScroll
-            stroke(row, Theme.Border, 1)
+            corner(row, 6)
+            stroke(row, (SelectedConfig == name) and Theme.BorderHot or Theme.Border, 1)
             row.MouseButton1Click:Connect(function()
                 if SelectedConfig == name then
                     loadConfig(name)
@@ -1627,10 +1862,10 @@ do
             local empty = Instance.new("TextLabel")
             empty.Size = UDim2.new(1, 0, 0, 60)
             empty.BackgroundTransparency = 1
-            empty.Text = "no configs yet — type a name\nand click [+ Create New Config]"
+            empty.Text = "no configs yet\ncreate one on the left"
             empty.TextColor3 = Theme.TextDim
             empty.Font = Theme.Font
-            empty.TextSize = 13
+            empty.TextSize = 12
             empty.TextWrapped = true
             empty.Parent = listScroll
         end
@@ -1640,19 +1875,21 @@ do
     refreshConfigList()
 end
 
--- Open RAGE tab
+-- Open first tab
 for _, t in pairs(Tabs) do
     t.Page.Visible = false
-    t.Button.BackgroundColor3 = Theme.PanelBg
-    t.Button.TextColor3 = Theme.TextDim
-    t.Stroke.Color = Theme.Border
-    t.Indicator.Visible = false
+    t.Button.BackgroundColor3 = Theme.SidePanel
+    t.Icon.TextColor3 = Theme.TextDim
+    t.Label.TextColor3 = Theme.TextDim
+    t.Bar.Visible = false
 end
-Tabs["RAGE"].Page.Visible = true
-Tabs["RAGE"].Button.BackgroundColor3 = Theme.Bg
-Tabs["RAGE"].Button.TextColor3 = Theme.AccentBright
-Tabs["RAGE"].Stroke.Color = Theme.Accent
-Tabs["RAGE"].Indicator.Visible = true
+Tabs["Rage"].Page.Visible = true
+Tabs["Rage"].Button.BackgroundColor3 = Theme.CardBg
+Tabs["Rage"].Icon.TextColor3 = Theme.AccentBright
+Tabs["Rage"].Label.TextColor3 = Theme.TextBright
+Tabs["Rage"].Bar.Visible = true
+CurrentTabTitle.Text = "RAGE"
+CurrentTabSub.Text = Tabs["Rage"].Subtitle
 
 ConfigUI.refreshAll = function()
     for _, refreshFn in ipairs(UIWidgets) do
@@ -2702,5 +2939,3 @@ print("=== BrutalSRGroblox loaded ===")
 print("Executor:", EXECUTOR_NAME)
 print("GUI parent:", parentName)
 print("INSERT = Toggle Menu")
-print("Currency tab: Scan remotes, fire them, test anti-cheat")
-print("UI Scale: Camera tab -> scroll down -> Menu Scale %")
