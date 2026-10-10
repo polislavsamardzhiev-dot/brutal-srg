@@ -116,6 +116,9 @@ local S = {
     CurrencyFireRate = 20,
     CurrencyArgs = "",
     CurrencyTargetPath = "",
+
+    -- UI
+    UIScale = 100,
 }
 
 local Binds = {
@@ -442,7 +445,7 @@ local function stroke(parent, color, thickness)
     return s
 end
 
--- Root menu -- NOW VERY WIDE
+-- Root menu
 local Menu = Instance.new("Frame")
 Menu.Name = "MainMenu"
 Menu.Size = UDim2.fromOffset(1320, 780)
@@ -455,7 +458,12 @@ Menu.ClipsDescendants = true
 Menu.Parent = gui
 local menuStroke = stroke(Menu, Theme.AccentDim, 2)
 
--- Outer glow (thin red line inside)
+-- UI Scale instance (controls the size of the whole menu)
+local menuScale = Instance.new("UIScale")
+menuScale.Scale = (S.UIScale or 100) / 100
+menuScale.Parent = Menu
+
+-- Inner glow line
 local innerLine = Instance.new("Frame")
 innerLine.Size = UDim2.new(1, -4, 1, -4)
 innerLine.Position = UDim2.fromOffset(2, 2)
@@ -1106,7 +1114,6 @@ end
 local RageTab = createTab("RAGE")
 local VisTab = createTab("VISUALS")
 local AimTab = createTab("AIM")
-local HitTab = createTab("HITBOXES")
 local MoveTab = createTab("MOVEMENT")
 local AATab = createTab("ANTI-AIM")
 local CamTab = createTab("CAMERA")
@@ -1204,13 +1211,18 @@ do
         function(c) S.ChamsColor = c end)
 end
 
--- AIM TAB
+-- AIM TAB (now includes hitboxes)
 do
     local left, right = AimTab.makeColumns()
     createSection(left, "Aimbot")
     createBindableToggle(left, "Aimbot", "Aimbot")
     createBindableToggle(left, "Auto Shoot", "AutoShoot")
     createBindableToggle(left, "FOV Visual", "FOVVisual")
+
+    createSection(left, "Aimbot Hitboxes")
+    createBindableToggle(left, "Aim Head", "HitboxHead")
+    createBindableToggle(left, "Aim Torso", "HitboxTorso")
+    createBindableToggle(left, "Aim Legs", "HitboxLegs")
 
     createSection(right, "Tuning")
     createValueRow(right, "FOV", function() return S.FOV end,
@@ -1222,15 +1234,6 @@ do
     createValueRow(right, "MaxPx/Frame", function() return S.AimMaxDelta end,
         function() S.AimMaxDelta = math.clamp(S.AimMaxDelta - 5, 1, 200) end,
         function() S.AimMaxDelta = math.clamp(S.AimMaxDelta + 5, 1, 200) end)
-end
-
--- HITBOXES TAB
-do
-    local left = select(1, HitTab.makeColumns())
-    createSection(left, "Aimbot Hitboxes")
-    createBindableToggle(left, "Aim Head", "HitboxHead")
-    createBindableToggle(left, "Aim Torso", "HitboxTorso")
-    createBindableToggle(left, "Aim Legs", "HitboxLegs")
 end
 
 -- MOVEMENT TAB
@@ -1307,7 +1310,7 @@ do
         function() S.AAPitchFlipSpeed = math.clamp(S.AAPitchFlipSpeed + 0.01, 0.01, 1.0) end)
 end
 
--- CAMERA TAB
+-- CAMERA TAB (with UI Scale)
 do
     local left, right = CamTab.makeColumns()
     createSection(left, "Camera")
@@ -1331,6 +1334,18 @@ do
     createValueRow(right, "Smooth Speed", function() return string.format("%.2f", S.ThirdPersonSmoothSpeed) end,
         function() S.ThirdPersonSmoothSpeed = math.clamp(S.ThirdPersonSmoothSpeed - 0.05, 0.05, 1.0) end,
         function() S.ThirdPersonSmoothSpeed = math.clamp(S.ThirdPersonSmoothSpeed + 0.05, 0.05, 1.0) end)
+
+    createSection(right, "UI Scale")
+    createValueRow(right, "Menu Scale %", function() return S.UIScale end,
+        function()
+            S.UIScale = math.clamp(S.UIScale - 5, 25, 200)
+            menuScale.Scale = S.UIScale / 100
+        end,
+        function()
+            S.UIScale = math.clamp(S.UIScale + 5, 25, 200)
+            menuScale.Scale = S.UIScale / 100
+        end)
+    createLabel(right, "Range: 25% - 200%  ·  affects whole menu")
 end
 
 -- TRACERS TAB
@@ -1492,7 +1507,7 @@ do
     createLabel(right, "server validation / rate limit.")
 end
 
--- CONFIGS TAB (fixed — content now fits)
+-- CONFIGS TAB
 do
     local left, right = ConfigTab.makeColumns()
 
@@ -1535,6 +1550,7 @@ do
             loadConfig(n)
             SelectedConfig = n
             if ConfigUI.refreshAll then ConfigUI.refreshAll() end
+            menuScale.Scale = (S.UIScale or 100) / 100
         end
     end, Theme.PanelBg)
 
@@ -1552,13 +1568,6 @@ do
     createTextButton(left, "[ i ] Inspect Players (F9)", function()
         inspectAllPlayers()
     end, Theme.PanelBg)
-
-    createSection(left, "Info")
-    createLabel(left, "Configs saved in your executor's")
-    createLabel(left, "workspace folder as:")
-    createLabel(left, "  BrutalSRG_configs.json")
-    createLabel(left, "")
-    createLabel(left, "Select a config to load it instantly.")
 
     createSection(right, "Saved Configs")
     local configListFrame = Instance.new("Frame")
@@ -1606,6 +1615,7 @@ do
                 if SelectedConfig == name then
                     loadConfig(name)
                     if ConfigUI.refreshAll then ConfigUI.refreshAll() end
+                    menuScale.Scale = (S.UIScale or 100) / 100
                 else
                     SelectedConfig = name
                     nameBox.Text = name
@@ -2693,3 +2703,4 @@ print("Executor:", EXECUTOR_NAME)
 print("GUI parent:", parentName)
 print("INSERT = Toggle Menu")
 print("Currency tab: Scan remotes, fire them, test anti-cheat")
+print("UI Scale: Camera tab -> scroll down -> Menu Scale %")
