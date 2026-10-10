@@ -114,9 +114,9 @@ local S = {
 
     -- Currency
     CurrencyAutoFire = false,
-    CurrencyFireRate = 20,      -- per second
-    CurrencyArgs = "",           -- custom args (comma separated)
-    CurrencyTargetPath = "",     -- selected remote path
+    CurrencyFireRate = 20,
+    CurrencyArgs = "",
+    CurrencyTargetPath = "",
 }
 
 local Binds = {
@@ -132,6 +132,33 @@ local Binds = {
     AntiAim = nil, AASpinBody = nil, AASpinHead = nil, AAJitter = nil,
     ThirdPersonWallCheck = nil, ThirdPersonSmooth = nil,
     CurrencyAutoFire = nil,
+}
+
+-- ============================================================
+-- THEME
+-- ============================================================
+local Theme = {
+    -- Flat, no rounding, thin borders, monospace-ish feel
+    Bg           = Color3.fromRGB(14, 14, 15),
+    PanelBg      = Color3.fromRGB(18, 18, 20),
+    PanelBgAlt   = Color3.fromRGB(22, 22, 24),
+    RowBg        = Color3.fromRGB(24, 24, 26),
+    RowBgHover   = Color3.fromRGB(32, 32, 36),
+    Border       = Color3.fromRGB(38, 38, 42),
+    BorderBright = Color3.fromRGB(58, 58, 64),
+    Text         = Color3.fromRGB(210, 210, 214),
+    TextDim      = Color3.fromRGB(140, 140, 148),
+    TextBright   = Color3.fromRGB(240, 240, 245),
+    Accent       = Color3.fromRGB(190, 60, 60),
+    AccentDim    = Color3.fromRGB(90, 30, 30),
+    AccentBright = Color3.fromRGB(220, 90, 90),
+    On           = Color3.fromRGB(90, 170, 110),
+    Off          = Color3.fromRGB(150, 60, 60),
+    Danger       = Color3.fromRGB(180, 50, 50),
+    Ok           = Color3.fromRGB(80, 150, 90),
+    Warn         = Color3.fromRGB(180, 150, 60),
+    Font         = Enum.Font.Code,
+    FontBold     = Enum.Font.Code,
 }
 
 -- ============================================================
@@ -407,56 +434,83 @@ local function makeDraggable(f, bar)
     end)
 end
 
+local function stroke(parent, color, thickness)
+    local s = Instance.new("UIStroke")
+    s.Color = color or Theme.Border
+    s.Thickness = thickness or 1
+    s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    s.Parent = parent
+    return s
+end
+
+-- Root menu
 local Menu = Instance.new("Frame")
 Menu.Name = "MainMenu"
-Menu.Size = UDim2.fromOffset(880, 680)
+Menu.Size = UDim2.fromOffset(900, 690)
 Menu.Position = UDim2.fromScale(0.05, 0.11)
-Menu.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+Menu.BackgroundColor3 = Theme.Bg
 Menu.BorderSizePixel = 0
 Menu.Visible = false
 Menu.Active = true
 Menu.Parent = gui
-Instance.new("UICorner", Menu).CornerRadius = UDim.new(0, 12)
+stroke(Menu, Theme.Border, 1)
 
-local stroke = Instance.new("UIStroke")
-stroke.Color = Color3.fromRGB(200, 0, 0)
-stroke.Thickness = 2
-stroke.Parent = Menu
-
+-- Top title bar
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 44)
-Title.BackgroundColor3 = Color3.fromRGB(25, 0, 0)
+Title.Size = UDim2.new(1, 0, 0, 36)
+Title.BackgroundColor3 = Theme.PanelBg
 Title.BorderSizePixel = 0
-Title.Text = "BRUTAL SR GROBLOX"
-Title.TextColor3 = Color3.fromRGB(255, 40, 40)
-Title.Font = Enum.Font.GothamBlack
-Title.TextSize = 20
+Title.Text = "BRUTAL SRG  //  v1.0"
+Title.TextColor3 = Theme.TextBright
+Title.Font = Theme.FontBold
+Title.TextSize = 14
+Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = Menu
-Instance.new("UICorner", Title).CornerRadius = UDim.new(0, 12)
+local titlePad = Instance.new("UIPadding")
+titlePad.PaddingLeft = UDim.new(0, 14)
+titlePad.Parent = Title
+local titleStroke = stroke(Title, Theme.Border, 1)
+
+-- Small accent stripe under title
+local TitleAccent = Instance.new("Frame")
+TitleAccent.Size = UDim2.new(1, 0, 0, 1)
+TitleAccent.Position = UDim2.fromOffset(0, 36)
+TitleAccent.BackgroundColor3 = Theme.Accent
+TitleAccent.BorderSizePixel = 0
+TitleAccent.Parent = Menu
+
+-- Right-side label in title
+local TitleRight = Instance.new("TextLabel")
+TitleRight.Size = UDim2.fromOffset(200, 36)
+TitleRight.Position = UDim2.new(1, -214, 0, 0)
+TitleRight.BackgroundTransparency = 1
+TitleRight.Text = "INSERT TOGGLE   •   F9 CONSOLE"
+TitleRight.TextColor3 = Theme.TextDim
+TitleRight.Font = Theme.Font
+TitleRight.TextSize = 11
+TitleRight.TextXAlignment = Enum.TextXAlignment.Right
+TitleRight.Parent = Title
 
 makeDraggable(Menu, Title)
 
+-- Tab bar
 local TabBar = Instance.new("Frame")
-TabBar.Size = UDim2.new(1, 0, 0, 40)
-TabBar.Position = UDim2.fromOffset(0, 44)
-TabBar.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+TabBar.Size = UDim2.new(1, 0, 0, 36)
+TabBar.Position = UDim2.fromOffset(0, 37)
+TabBar.BackgroundColor3 = Theme.PanelBgAlt
 TabBar.BorderSizePixel = 0
 TabBar.Parent = Menu
+stroke(TabBar, Theme.Border, 1)
 
 local TabLayout = Instance.new("UIListLayout")
 TabLayout.FillDirection = Enum.FillDirection.Horizontal
 TabLayout.SortOrder = Enum.SortOrder.LayoutOrder
-TabLayout.Padding = UDim.new(0, 3)
+TabLayout.Padding = UDim.new(0, 0)
 TabLayout.Parent = TabBar
 
-local TabPad = Instance.new("UIPadding")
-TabPad.PaddingLeft = UDim.new(0, 6)
-TabPad.PaddingTop = UDim.new(0, 5)
-TabPad.Parent = TabBar
-
 local ContentArea = Instance.new("Frame")
-ContentArea.Size = UDim2.new(1, 0, 1, -84)
-ContentArea.Position = UDim2.fromOffset(0, 84)
+ContentArea.Size = UDim2.new(1, 0, 1, -74)
+ContentArea.Position = UDim2.fromOffset(0, 74)
 ContentArea.BackgroundTransparency = 1
 ContentArea.Parent = Menu
 
@@ -464,21 +518,23 @@ local Tabs = {}
 
 local function createTab(name)
     local btn = Instance.new("TextButton")
-    btn.Size = UDim2.fromOffset(80, 30)
-    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-    btn.Font = Enum.Font.GothamBold
-    btn.TextSize = 10
+    btn.Size = UDim2.fromOffset(96, 36)
+    btn.BackgroundColor3 = Theme.PanelBgAlt
+    btn.BackgroundTransparency = 0
+    btn.TextColor3 = Theme.TextDim
+    btn.Font = Theme.FontBold
+    btn.TextSize = 12
     btn.Text = name
+    btn.AutoButtonColor = false
     btn.Parent = TabBar
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    local btnStroke = stroke(btn, Theme.Border, 1)
 
     local page = Instance.new("ScrollingFrame")
     page.Size = UDim2.new(1, 0, 1, 0)
-    page.BackgroundTransparency = 1
+    page.BackgroundColor3 = Theme.Bg
     page.BorderSizePixel = 0
-    page.ScrollBarThickness = 5
-    page.ScrollBarImageColor3 = Color3.fromRGB(180, 0, 0)
+    page.ScrollBarThickness = 4
+    page.ScrollBarImageColor3 = Theme.BorderBright
     page.CanvasSize = UDim2.new(0, 0, 0, 0)
     page.AutomaticCanvasSize = Enum.AutomaticSize.Y
     page.Visible = false
@@ -486,12 +542,12 @@ local function createTab(name)
 
     local pageLayout = Instance.new("UIListLayout")
     pageLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    pageLayout.Padding = UDim.new(0, 6)
+    pageLayout.Padding = UDim.new(0, 4)
     pageLayout.Parent = page
 
     local pagePad = Instance.new("UIPadding")
-    pagePad.PaddingLeft = UDim.new(0, 12)
-    pagePad.PaddingRight = UDim.new(0, 12)
+    pagePad.PaddingLeft = UDim.new(0, 10)
+    pagePad.PaddingRight = UDim.new(0, 10)
     pagePad.PaddingTop = UDim.new(0, 10)
     pagePad.PaddingBottom = UDim.new(0, 10)
     pagePad.Parent = page
@@ -506,29 +562,29 @@ local function createTab(name)
         local hLayout = Instance.new("UIListLayout")
         hLayout.FillDirection = Enum.FillDirection.Horizontal
         hLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        hLayout.Padding = UDim.new(0, 12)
+        hLayout.Padding = UDim.new(0, 8)
         hLayout.Parent = holder
 
         local left = Instance.new("Frame")
-        left.Size = UDim2.new(0.48, 0, 0, 0)
+        left.Size = UDim2.new(0.5, -4, 0, 0)
         left.AutomaticSize = Enum.AutomaticSize.Y
         left.BackgroundTransparency = 1
         left.LayoutOrder = 1
         left.Parent = holder
         local ll = Instance.new("UIListLayout")
         ll.SortOrder = Enum.SortOrder.LayoutOrder
-        ll.Padding = UDim.new(0, 6)
+        ll.Padding = UDim.new(0, 4)
         ll.Parent = left
 
         local right = Instance.new("Frame")
-        right.Size = UDim2.new(0.48, 0, 0, 0)
+        right.Size = UDim2.new(0.5, -4, 0, 0)
         right.AutomaticSize = Enum.AutomaticSize.Y
         right.BackgroundTransparency = 1
         right.LayoutOrder = 2
         right.Parent = holder
         local rl = Instance.new("UIListLayout")
         rl.SortOrder = Enum.SortOrder.LayoutOrder
-        rl.Padding = UDim.new(0, 6)
+        rl.Padding = UDim.new(0, 4)
         rl.Parent = right
 
         return left, right
@@ -537,15 +593,25 @@ local function createTab(name)
     btn.MouseButton1Click:Connect(function()
         for _, t in pairs(Tabs) do
             t.Page.Visible = false
-            t.Button.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-            t.Button.TextColor3 = Color3.fromRGB(200, 200, 200)
+            t.Button.BackgroundColor3 = Theme.PanelBgAlt
+            t.Button.TextColor3 = Theme.TextDim
+            if t.Stroke then t.Stroke.Color = Theme.Border end
         end
         page.Visible = true
-        btn.BackgroundColor3 = Color3.fromRGB(130, 0, 0)
-        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btn.BackgroundColor3 = Theme.Bg
+        btn.TextColor3 = Theme.TextBright
+        btnStroke.Color = Theme.Accent
     end)
 
-    local tab = { Button = btn, Page = page, makeColumns = makeColumns }
+    -- Hover
+    btn.MouseEnter:Connect(function()
+        if not page.Visible then btn.BackgroundColor3 = Theme.RowBg end
+    end)
+    btn.MouseLeave:Connect(function()
+        if not page.Visible then btn.BackgroundColor3 = Theme.PanelBgAlt end
+    end)
+
+    local tab = { Button = btn, Page = page, makeColumns = makeColumns, Stroke = btnStroke }
     Tabs[name] = tab
     return tab
 end
@@ -553,58 +619,114 @@ end
 -- ============================================================
 -- WIDGETS
 -- ============================================================
+local function createSection(parent, text)
+    local box = Instance.new("Frame")
+    box.Size = UDim2.new(1, 0, 0, 22)
+    box.BackgroundColor3 = Theme.PanelBg
+    box.BorderSizePixel = 0
+    box.Parent = parent
+    stroke(box, Theme.Border, 1)
+
+    local leftBar = Instance.new("Frame")
+    leftBar.Size = UDim2.new(0, 2, 1, 0)
+    leftBar.BackgroundColor3 = Theme.Accent
+    leftBar.BorderSizePixel = 0
+    leftBar.Parent = box
+
+    local l = Instance.new("TextLabel")
+    l.Size = UDim2.new(1, -14, 1, 0)
+    l.Position = UDim2.fromOffset(10, 0)
+    l.BackgroundTransparency = 1
+    l.Font = Theme.FontBold
+    l.TextSize = 11
+    l.TextColor3 = Theme.Text
+    l.TextXAlignment = Enum.TextXAlignment.Left
+    l.Text = string.upper(text)
+    l.Parent = box
+end
+
+local function createLabel(parent, text)
+    local l = Instance.new("TextLabel")
+    l.Size = UDim2.new(1, 0, 0, 20)
+    l.BackgroundTransparency = 1
+    l.Font = Theme.Font
+    l.TextSize = 11
+    l.TextColor3 = Theme.TextDim
+    l.TextXAlignment = Enum.TextXAlignment.Left
+    l.Text = text
+    l.Parent = parent
+    local pad = Instance.new("UIPadding")
+    pad.PaddingLeft = UDim.new(0, 8)
+    pad.Parent = l
+end
+
 local function createBindableToggle(parent, name, key)
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, 0, 0, 30)
-    row.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    row.Size = UDim2.new(1, 0, 0, 26)
+    row.BackgroundColor3 = Theme.RowBg
     row.BorderSizePixel = 0
     row.Parent = parent
-    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 6)
+    local rowStroke = stroke(row, Theme.Border, 1)
 
     local toggleBtn = Instance.new("TextButton")
-    toggleBtn.Size = UDim2.new(1, -84, 1, 0)
-    toggleBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    toggleBtn.Font = Enum.Font.Gotham
-    toggleBtn.TextSize = 12
+    toggleBtn.Size = UDim2.new(1, -80, 1, 0)
+    toggleBtn.BackgroundTransparency = 1
+    toggleBtn.Font = Theme.Font
+    toggleBtn.TextSize = 11
+    toggleBtn.TextXAlignment = Enum.TextXAlignment.Left
     toggleBtn.Text = ""
+    toggleBtn.AutoButtonColor = false
     toggleBtn.Parent = row
-    Instance.new("UICorner", toggleBtn).CornerRadius = UDim.new(0, 6)
+    local tpad = Instance.new("UIPadding")
+    tpad.PaddingLeft = UDim.new(0, 10)
+    tpad.Parent = toggleBtn
+
+    local stateDot = Instance.new("Frame")
+    stateDot.Size = UDim2.fromOffset(6, 6)
+    stateDot.Position = UDim2.new(1, -74, 0.5, -3)
+    stateDot.BackgroundColor3 = Theme.Off
+    stateDot.BorderSizePixel = 0
+    stateDot.Parent = row
 
     local bindBtn = Instance.new("TextButton")
-    bindBtn.Size = UDim2.fromOffset(78, 30)
-    bindBtn.Position = UDim2.new(1, -80, 0, 0)
-    bindBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    bindBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    bindBtn.Font = Enum.Font.GothamBold
-    bindBtn.TextSize = 11
+    bindBtn.Size = UDim2.fromOffset(66, 20)
+    bindBtn.Position = UDim2.new(1, -66, 0.5, -10)
+    bindBtn.BackgroundColor3 = Theme.PanelBg
+    bindBtn.TextColor3 = Theme.TextDim
+    bindBtn.Font = Theme.Font
+    bindBtn.TextSize = 10
     bindBtn.Text = ""
+    bindBtn.AutoButtonColor = false
     bindBtn.Parent = row
-    Instance.new("UICorner", bindBtn).CornerRadius = UDim.new(0, 6)
+    stroke(bindBtn, Theme.Border, 1)
 
     local function refresh()
         local on = S[key]
-        toggleBtn.Text = name .. ": " .. (on and "ON" or "OFF")
-        toggleBtn.TextColor3 = on and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(255, 70, 70)
-        toggleBtn.BackgroundColor3 = on and Color3.fromRGB(20, 40, 20) or Color3.fromRGB(40, 20, 20)
+        toggleBtn.Text = name
+        toggleBtn.TextColor3 = on and Theme.TextBright or Theme.TextDim
+        stateDot.BackgroundColor3 = on and Theme.On or Theme.Off
+        rowStroke.Color = on and Theme.BorderBright or Theme.Border
         local kb = Binds[key]
         if kb then
-            bindBtn.Text = "[" .. kb.Name .. "]"
-            bindBtn.BackgroundColor3 = Color3.fromRGB(130, 0, 0)
+            bindBtn.Text = kb.Name
+            bindBtn.TextColor3 = Theme.AccentBright
         else
-            bindBtn.Text = "No Bind"
-            bindBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+            bindBtn.Text = "—"
+            bindBtn.TextColor3 = Theme.TextDim
         end
     end
     refresh()
 
     toggleBtn.MouseButton1Click:Connect(function() S[key] = not S[key] refresh() end)
+    toggleBtn.MouseEnter:Connect(function() row.BackgroundColor3 = Theme.RowBgHover end)
+    toggleBtn.MouseLeave:Connect(function() row.BackgroundColor3 = Theme.RowBg end)
 
     local waiting = false
     bindBtn.MouseButton1Click:Connect(function()
         if waiting then return end
         waiting = true
-        bindBtn.Text = "Press..."
-        bindBtn.BackgroundColor3 = Color3.fromRGB(200, 120, 0)
+        bindBtn.Text = "..."
+        bindBtn.TextColor3 = Theme.Warn
         local conn
         conn = UIS.InputBegan:Connect(function(i, gp)
             if gp then return end
@@ -623,34 +745,21 @@ local function createBindableToggle(parent, name, key)
     table.insert(UIWidgets, refresh)
 end
 
-local function createLabel(parent, text)
-    local l = Instance.new("TextLabel")
-    l.Size = UDim2.new(1, 0, 0, 26)
-    l.BackgroundColor3 = Color3.fromRGB(30, 0, 0)
-    l.BorderSizePixel = 0
-    l.Font = Enum.Font.GothamBold
-    l.TextSize = 13
-    l.TextColor3 = Color3.fromRGB(255, 180, 180)
-    l.Text = text
-    l.Parent = parent
-    Instance.new("UICorner", l).CornerRadius = UDim.new(0, 6)
-end
-
 local function createValueRow(parent, label, getV, dec, inc)
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, 0, 0, 28)
-    row.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    row.Size = UDim2.new(1, 0, 0, 24)
+    row.BackgroundColor3 = Theme.RowBg
     row.BorderSizePixel = 0
     row.Parent = parent
-    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 6)
+    stroke(row, Theme.Border, 1)
 
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -120, 1, 0)
-    lbl.Position = UDim2.fromOffset(8, 0)
+    lbl.Size = UDim2.new(1, -110, 1, 0)
+    lbl.Position = UDim2.fromOffset(10, 0)
     lbl.BackgroundTransparency = 1
-    lbl.TextColor3 = Color3.fromRGB(220, 220, 220)
-    lbl.Font = Enum.Font.Gotham
-    lbl.TextSize = 12
+    lbl.TextColor3 = Theme.Text
+    lbl.Font = Theme.Font
+    lbl.TextSize = 11
     lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.Parent = row
 
@@ -658,119 +767,121 @@ local function createValueRow(parent, label, getV, dec, inc)
     upd()
 
     local minus = Instance.new("TextButton")
-    minus.Size = UDim2.fromOffset(32, 22)
-    minus.Position = UDim2.new(1, -92, 0.5, -11)
-    minus.BackgroundColor3 = Color3.fromRGB(130, 0, 0)
+    minus.Size = UDim2.fromOffset(24, 18)
+    minus.Position = UDim2.new(1, -58, 0.5, -9)
+    minus.BackgroundColor3 = Theme.PanelBg
     minus.Text = "-"
-    minus.TextColor3 = Color3.fromRGB(255, 255, 255)
-    minus.Font = Enum.Font.GothamBold
-    minus.TextSize = 14
+    minus.TextColor3 = Theme.Text
+    minus.Font = Theme.FontBold
+    minus.TextSize = 12
+    minus.AutoButtonColor = false
     minus.Parent = row
-    Instance.new("UICorner", minus).CornerRadius = UDim.new(0, 4)
+    stroke(minus, Theme.Border, 1)
 
     local plus = Instance.new("TextButton")
-    plus.Size = UDim2.fromOffset(32, 22)
-    plus.Position = UDim2.new(1, -56, 0.5, -11)
-    plus.BackgroundColor3 = Color3.fromRGB(0, 130, 0)
+    plus.Size = UDim2.fromOffset(24, 18)
+    plus.Position = UDim2.new(1, -30, 0.5, -9)
+    plus.BackgroundColor3 = Theme.PanelBg
     plus.Text = "+"
-    plus.TextColor3 = Color3.fromRGB(255, 255, 255)
-    plus.Font = Enum.Font.GothamBold
-    plus.TextSize = 14
+    plus.TextColor3 = Theme.Text
+    plus.Font = Theme.FontBold
+    plus.TextSize = 12
+    plus.AutoButtonColor = false
     plus.Parent = row
-    Instance.new("UICorner", plus).CornerRadius = UDim.new(0, 4)
+    stroke(plus, Theme.Border, 1)
 
     minus.MouseButton1Click:Connect(function() dec(); upd() end)
-    plus.MouseButton1Click:Connect(function() upd() inc(); upd() end)
+    plus.MouseButton1Click:Connect(function() inc(); upd() end)
+
+    minus.MouseEnter:Connect(function() minus.BackgroundColor3 = Theme.RowBgHover end)
+    minus.MouseLeave:Connect(function() minus.BackgroundColor3 = Theme.PanelBg end)
+    plus.MouseEnter:Connect(function() plus.BackgroundColor3 = Theme.RowBgHover end)
+    plus.MouseLeave:Connect(function() plus.BackgroundColor3 = Theme.PanelBg end)
 
     table.insert(UIWidgets, upd)
 end
 
 local function createTextButton(parent, text, cb, bg)
     local b = Instance.new("TextButton")
-    b.Size = UDim2.new(1, 0, 0, 28)
-    b.BackgroundColor3 = bg or Color3.fromRGB(90, 0, 0)
+    b.Size = UDim2.new(1, 0, 0, 24)
+    b.BackgroundColor3 = bg or Theme.PanelBg
     b.Text = text
-    b.TextColor3 = Color3.fromRGB(255, 255, 255)
-    b.Font = Enum.Font.GothamBold
-    b.TextSize = 12
+    b.TextColor3 = Theme.Text
+    b.Font = Theme.Font
+    b.TextSize = 11
+    b.AutoButtonColor = false
     b.Parent = parent
-    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
+    stroke(b, Theme.Border, 1)
     b.MouseButton1Click:Connect(cb)
+    b.MouseEnter:Connect(function() b.BackgroundColor3 = Theme.RowBgHover end)
+    b.MouseLeave:Connect(function() b.BackgroundColor3 = bg or Theme.PanelBg end)
     return b
 end
 
 -- ============================================================
--- COLOR PICKER
+-- COLOR PICKER (flat)
 -- ============================================================
 local function createColorPicker(parent, labelText, getColor, setColor)
     local holder = Instance.new("Frame")
-    holder.Size = UDim2.new(1, 0, 0, 30)
-    holder.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    holder.Size = UDim2.new(1, 0, 0, 24)
+    holder.BackgroundColor3 = Theme.RowBg
     holder.BorderSizePixel = 0
     holder.Parent = parent
-    Instance.new("UICorner", holder).CornerRadius = UDim.new(0, 6)
+    stroke(holder, Theme.Border, 1)
 
     local lbl = Instance.new("TextLabel")
-    lbl.Size = UDim2.new(1, -110, 1, 0)
-    lbl.Position = UDim2.fromOffset(8, 0)
+    lbl.Size = UDim2.new(1, -70, 1, 0)
+    lbl.Position = UDim2.fromOffset(10, 0)
     lbl.BackgroundTransparency = 1
-    lbl.TextColor3 = Color3.fromRGB(220, 220, 220)
-    lbl.Font = Enum.Font.Gotham
-    lbl.TextSize = 12
+    lbl.TextColor3 = Theme.Text
+    lbl.Font = Theme.Font
+    lbl.TextSize = 11
     lbl.TextXAlignment = Enum.TextXAlignment.Left
     lbl.Text = labelText
     lbl.Parent = holder
 
     local preview = Instance.new("Frame")
-    preview.Size = UDim2.fromOffset(48, 22)
-    preview.Position = UDim2.new(1, -56, 0.5, -11)
+    preview.Size = UDim2.fromOffset(48, 16)
+    preview.Position = UDim2.new(1, -58, 0.5, -8)
     preview.BackgroundColor3 = getColor()
     preview.BorderSizePixel = 0
     preview.Parent = holder
-    Instance.new("UICorner", preview).CornerRadius = UDim.new(0, 4)
-    local pStroke = Instance.new("UIStroke")
-    pStroke.Color = Color3.fromRGB(255, 255, 255)
-    pStroke.Thickness = 1
-    pStroke.Parent = preview
+    stroke(preview, Theme.BorderBright, 1)
 
     local popup = Instance.new("Frame")
     popup.Size = UDim2.fromOffset(280, 280)
     popup.Position = UDim2.fromScale(0.5, 0.5)
     popup.AnchorPoint = Vector2.new(0.5, 0.5)
-    popup.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    popup.BackgroundColor3 = Theme.PanelBg
     popup.BorderSizePixel = 0
     popup.Visible = false
     popup.ZIndex = 50
     popup.Parent = Menu
-    Instance.new("UICorner", popup).CornerRadius = UDim.new(0, 10)
-    local pStroke2 = Instance.new("UIStroke")
-    pStroke2.Color = Color3.fromRGB(200, 0, 0)
-    pStroke2.Thickness = 2
-    pStroke2.Parent = popup
+    stroke(popup, Theme.BorderBright, 1)
 
     local pTitle = Instance.new("TextLabel")
-    pTitle.Size = UDim2.new(1, 0, 0, 32)
-    pTitle.BackgroundColor3 = Color3.fromRGB(30, 0, 0)
+    pTitle.Size = UDim2.new(1, 0, 0, 28)
+    pTitle.BackgroundColor3 = Theme.PanelBgAlt
     pTitle.BorderSizePixel = 0
-    pTitle.Text = "COLOR: " .. labelText
-    pTitle.TextColor3 = Color3.fromRGB(255, 200, 200)
-    pTitle.Font = Enum.Font.GothamBold
-    pTitle.TextSize = 13
+    pTitle.Text = labelText
+    pTitle.TextColor3 = Theme.TextBright
+    pTitle.Font = Theme.FontBold
+    pTitle.TextSize = 11
     pTitle.ZIndex = 51
     pTitle.Parent = popup
-    Instance.new("UICorner", pTitle).CornerRadius = UDim.new(0, 10)
 
     local closeBtn = Instance.new("TextButton")
-    closeBtn.Size = UDim2.fromOffset(28, 28)
-    closeBtn.Position = UDim2.new(1, -32, 0, 2)
-    closeBtn.BackgroundColor3 = Color3.fromRGB(180, 0, 0)
+    closeBtn.Size = UDim2.fromOffset(24, 24)
+    closeBtn.Position = UDim2.new(1, -28, 0, 2)
+    closeBtn.BackgroundColor3 = Theme.AccentDim
     closeBtn.Text = "X"
-    closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    closeBtn.Font = Enum.Font.GothamBold
-    closeBtn.TextSize = 12
+    closeBtn.TextColor3 = Theme.TextBright
+    closeBtn.Font = Theme.FontBold
+    closeBtn.TextSize = 11
+    closeBtn.AutoButtonColor = false
     closeBtn.ZIndex = 52
     closeBtn.Parent = popup
-    Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
+    stroke(closeBtn, Theme.Accent, 1)
 
     local state = { r = math.floor(getColor().R * 255), g = math.floor(getColor().G * 255), b = math.floor(getColor().B * 255) }
 
@@ -788,9 +899,9 @@ local function createColorPicker(parent, labelText, getColor, setColor)
         label.Position = UDim2.fromOffset(14, y + 4)
         label.BackgroundTransparency = 1
         label.Text = name
-        label.TextColor3 = Color3.fromRGB(220, 220, 220)
-        label.Font = Enum.Font.GothamBold
-        label.TextSize = 12
+        label.TextColor3 = Theme.Text
+        label.Font = Theme.FontBold
+        label.TextSize = 11
         label.ZIndex = 51
         label.Parent = popup
 
@@ -799,28 +910,27 @@ local function createColorPicker(parent, labelText, getColor, setColor)
         valueLbl.Position = UDim2.new(1, -54, 0, y + 4)
         valueLbl.BackgroundTransparency = 1
         valueLbl.Text = tostring(state[key])
-        valueLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
-        valueLbl.Font = Enum.Font.Gotham
-        valueLbl.TextSize = 12
+        valueLbl.TextColor3 = Theme.TextBright
+        valueLbl.Font = Theme.Font
+        valueLbl.TextSize = 11
         valueLbl.ZIndex = 51
         valueLbl.Parent = popup
 
         local sliderBg = Instance.new("Frame")
-        sliderBg.Size = UDim2.new(1, -90, 0, 12)
-        sliderBg.Position = UDim2.fromOffset(50, y + 8)
-        sliderBg.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        sliderBg.Size = UDim2.new(1, -90, 0, 10)
+        sliderBg.Position = UDim2.fromOffset(50, y + 9)
+        sliderBg.BackgroundColor3 = Theme.RowBg
         sliderBg.BorderSizePixel = 0
         sliderBg.ZIndex = 51
         sliderBg.Parent = popup
-        Instance.new("UICorner", sliderBg).CornerRadius = UDim.new(0, 6)
+        stroke(sliderBg, Theme.Border, 1)
 
         local fill = Instance.new("Frame")
         fill.Size = UDim2.new(state[key] / 255, 0, 1, 0)
-        fill.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+        fill.BackgroundColor3 = Theme.Accent
         fill.BorderSizePixel = 0
         fill.ZIndex = 52
         fill.Parent = sliderBg
-        Instance.new("UICorner", fill).CornerRadius = UDim.new(0, 6)
 
         sliderRefs[key] = { fill = fill, valueLbl = valueLbl }
 
@@ -865,9 +975,9 @@ local function createColorPicker(parent, labelText, getColor, setColor)
     presetsTitle.Position = UDim2.fromOffset(10, 165)
     presetsTitle.BackgroundTransparency = 1
     presetsTitle.Text = "PRESETS"
-    presetsTitle.TextColor3 = Color3.fromRGB(200, 200, 200)
-    presetsTitle.Font = Enum.Font.GothamBold
-    presetsTitle.TextSize = 11
+    presetsTitle.TextColor3 = Theme.TextDim
+    presetsTitle.Font = Theme.FontBold
+    presetsTitle.TextSize = 10
     presetsTitle.ZIndex = 51
     presetsTitle.Parent = popup
 
@@ -887,13 +997,10 @@ local function createColorPicker(parent, labelText, getColor, setColor)
         swatch.BackgroundColor3 = c
         swatch.Text = ""
         swatch.BorderSizePixel = 0
+        swatch.AutoButtonColor = false
         swatch.ZIndex = 51
         swatch.Parent = popup
-        Instance.new("UICorner", swatch).CornerRadius = UDim.new(0, 6)
-        local sStroke = Instance.new("UIStroke")
-        sStroke.Color = Color3.fromRGB(80, 80, 80)
-        sStroke.Thickness = 1
-        sStroke.Parent = swatch
+        stroke(swatch, Theme.BorderBright, 1)
 
         swatch.MouseButton1Click:Connect(function()
             state.r = math.floor(c.R * 255)
@@ -949,13 +1056,13 @@ local ConfigTab = createTab("CONFIGS")
 -- RAGE TAB
 do
     local left, right = RageTab.makeColumns()
-    createLabel(left, "▸ RAGE AIMBOT")
+    createSection(left, "Rage Aimbot")
     createBindableToggle(left, "Rage Aimbot", "RageAimbot")
     createBindableToggle(left, "Auto Shoot (M1)", "RageAutoShoot")
     createBindableToggle(left, "Wall Check", "RageWallCheck")
     createBindableToggle(left, "Ignore Teammates", "IgnoreTeammates")
 
-    createLabel(left, "▸ RAGE SETTINGS")
+    createSection(left, "Rage Settings")
     createValueRow(left, "Rage FOV", function() return S.RageFOV end,
         function() S.RageFOV = math.clamp(S.RageFOV - 10, 10, 360) end,
         function() S.RageFOV = math.clamp(S.RageFOV + 10, 10, 360) end)
@@ -965,7 +1072,7 @@ do
     createValueRow(left, "Shoot Delay ms", function() return math.floor(S.RageShootDelay * 1000) end,
         function() S.RageShootDelay = math.clamp(S.RageShootDelay - 0.01, 0.01, 1.0) end,
         function() S.RageShootDelay = math.clamp(S.RageShootDelay + 0.01, 0.01, 1.0) end)
-    createValueRow(left, "Fire Angle°", function() return S.RageFireAngle end,
+    createValueRow(left, "Fire Angle", function() return S.RageFireAngle end,
         function() S.RageFireAngle = math.clamp(S.RageFireAngle - 0.5, 0.5, 30) end,
         function() S.RageFireAngle = math.clamp(S.RageFireAngle + 0.5, 0.5, 30) end)
     createValueRow(left, "Lock Frames", function() return S.RageLockFrames end,
@@ -977,26 +1084,26 @@ do
     createBindableToggle(left, "Adaptive Lead", "RageAdaptiveLead")
 
     local rb
-    rb = createTextButton(left, "Rage Hitbox: " .. S.RageHitbox, function()
+    rb = createTextButton(left, "Hitbox: " .. S.RageHitbox, function()
         local o = { "Head", "Torso", "Legs" }
         local i = 1
         for k, v in ipairs(o) do if v == S.RageHitbox then i = k break end end
         i = i % #o + 1
         S.RageHitbox = o[i]
-        rb.Text = "Rage Hitbox: " .. S.RageHitbox
-    end, Color3.fromRGB(60, 20, 20))
+        rb.Text = "Hitbox: " .. S.RageHitbox
+    end, Theme.PanelBg)
 
-    createLabel(left, "▸ DIAGNOSTIC")
-    createTextButton(left, "🔍 Inspect All Players", function()
+    createSection(left, "Diagnostic")
+    createTextButton(left, "[ * ] Inspect All Players", function()
         inspectAllPlayers()
-    end, Color3.fromRGB(0, 80, 120))
+    end, Theme.PanelBg)
 
-    createLabel(right, "▸ SILENT AIM")
+    createSection(right, "Silent Aim")
     createBindableToggle(right, "Silent Aim", "SilentAim")
     createValueRow(right, "SA FOV", function() return S.SilentAimFOV end,
         function() S.SilentAimFOV = math.clamp(S.SilentAimFOV - 10, 10, 360) end,
         function() S.SilentAimFOV = math.clamp(S.SilentAimFOV + 10, 10, 360) end)
-    createValueRow(right, "SA Angle°", function() return S.SilentAimAngleThreshold end,
+    createValueRow(right, "SA Angle", function() return S.SilentAimAngleThreshold end,
         function() S.SilentAimAngleThreshold = math.clamp(S.SilentAimAngleThreshold - 1, 1, 30) end,
         function() S.SilentAimAngleThreshold = math.clamp(S.SilentAimAngleThreshold + 1, 1, 30) end)
     createValueRow(right, "SA Settle ms", function() return math.floor(S.SilentAimSettle * 1000) end,
@@ -1011,13 +1118,13 @@ do
         i = i % #o + 1
         S.SilentAimHitbox = o[i]
         saHB.Text = "SA Hitbox: " .. S.SilentAimHitbox
-    end, Color3.fromRGB(60, 20, 20))
+    end, Theme.PanelBg)
 end
 
 -- VISUALS TAB
 do
     local left, right = VisTab.makeColumns()
-    createLabel(left, "▸ ESP")
+    createSection(left, "ESP")
     createBindableToggle(left, "Box ESP", "BoxESP")
     createBindableToggle(left, "Skeleton ESP", "SkeletonESP")
     createBindableToggle(left, "Chams", "Chams")
@@ -1027,24 +1134,24 @@ do
         function() S.ChamsFillTransparency = math.clamp(S.ChamsFillTransparency - 0.05, 0, 1) end,
         function() S.ChamsFillTransparency = math.clamp(S.ChamsFillTransparency + 0.05, 0, 1) end)
 
-    createLabel(right, "▸ COLORS")
-    createColorPicker(right, "Box ESP Color", function() return S.BoxColor end,
+    createSection(right, "Colors")
+    createColorPicker(right, "Box ESP", function() return S.BoxColor end,
         function(c) S.BoxColor = c end)
-    createColorPicker(right, "Skeleton Color", function() return S.SkeletonColor end,
+    createColorPicker(right, "Skeleton", function() return S.SkeletonColor end,
         function(c) S.SkeletonColor = c end)
-    createColorPicker(right, "Chams Color", function() return S.ChamsColor end,
+    createColorPicker(right, "Chams", function() return S.ChamsColor end,
         function(c) S.ChamsColor = c end)
 end
 
 -- AIM TAB
 do
     local left, right = AimTab.makeColumns()
-    createLabel(left, "▸ AIMBOT")
+    createSection(left, "Aimbot")
     createBindableToggle(left, "Aimbot", "Aimbot")
     createBindableToggle(left, "Auto Shoot", "AutoShoot")
     createBindableToggle(left, "FOV Visual", "FOVVisual")
 
-    createLabel(right, "▸ TUNING")
+    createSection(right, "Tuning")
     createValueRow(right, "FOV", function() return S.FOV end,
         function() S.FOV = math.clamp(S.FOV - 5, 10, 180) end,
         function() S.FOV = math.clamp(S.FOV + 5, 10, 180) end)
@@ -1059,7 +1166,7 @@ end
 -- HITBOXES TAB
 do
     local left = select(1, HitTab.makeColumns())
-    createLabel(left, "▸ AIMBOT HITBOXES")
+    createSection(left, "Aimbot Hitboxes")
     createBindableToggle(left, "Aim Head", "HitboxHead")
     createBindableToggle(left, "Aim Torso", "HitboxTorso")
     createBindableToggle(left, "Aim Legs", "HitboxLegs")
@@ -1068,27 +1175,27 @@ end
 -- MOVEMENT TAB
 do
     local left, right = MoveTab.makeColumns()
-    createLabel(left, "▸ BHOP")
+    createSection(left, "Bhop")
     createBindableToggle(left, "BHOP (Hold Space)", "Bhop")
     createBindableToggle(left, "BHOP Speed Boost", "BhopSpeedBoost")
 
-    createLabel(left, "▸ MOVEMENT EXPLOITS")
+    createSection(left, "Exploits")
     createBindableToggle(left, "No-Clip", "NoClip")
     createBindableToggle(left, "Speed Hack", "SpeedHack")
     createBindableToggle(left, "Jump Power Hack", "JumpPowerHack")
     createBindableToggle(left, "Fly (Hold F)", "Fly")
 
-    createLabel(right, "▸ SPEED TUNING")
+    createSection(right, "Speed Tuning")
     createValueRow(right, "Walk Speed", function() return S.SpeedValue end,
         function() S.SpeedValue = math.clamp(S.SpeedValue - 5, 16, 500) end,
         function() S.SpeedValue = math.clamp(S.SpeedValue + 5, 16, 500) end)
 
-    createLabel(right, "▸ JUMP TUNING")
+    createSection(right, "Jump Tuning")
     createValueRow(right, "Jump Power", function() return S.JumpPowerValue end,
         function() S.JumpPowerValue = math.clamp(S.JumpPowerValue - 10, 50, 500) end,
         function() S.JumpPowerValue = math.clamp(S.JumpPowerValue + 10, 50, 500) end)
 
-    createLabel(right, "▸ FLY TUNING")
+    createSection(right, "Fly Tuning")
     createValueRow(right, "Fly Speed", function() return S.FlySpeed end,
         function() S.FlySpeed = math.clamp(S.FlySpeed - 5, 5, 300) end,
         function() S.FlySpeed = math.clamp(S.FlySpeed + 5, 5, 300) end)
@@ -1098,26 +1205,26 @@ end
 do
     local left, right = AATab.makeColumns()
 
-    createLabel(left, "▸ ANTI-AIM")
+    createSection(left, "Anti-Aim")
     createBindableToggle(left, "Anti-Aim Master", "AntiAim")
     createBindableToggle(left, "Spin Body", "AASpinBody")
     createBindableToggle(left, "Spin Head Only", "AASpinHead")
     createBindableToggle(left, "Jitter Mode", "AAJitter")
 
-    createLabel(right, "▸ SPIN TUNING")
-    createValueRow(right, "Spin Speed°", function() return S.AASpinSpeed end,
+    createSection(right, "Spin Tuning")
+    createValueRow(right, "Spin Speed", function() return S.AASpinSpeed end,
         function() S.AASpinSpeed = math.clamp(S.AASpinSpeed - 5, 1, 180) end,
         function() S.AASpinSpeed = math.clamp(S.AASpinSpeed + 5, 1, 180) end)
 
-    createLabel(right, "▸ HEAD FAKE ANGLES")
-    createValueRow(right, "Head Pitch°", function() return S.AAHeadPitch end,
+    createSection(right, "Head Fake Angles")
+    createValueRow(right, "Head Pitch", function() return S.AAHeadPitch end,
         function() S.AAHeadPitch = math.clamp(S.AAHeadPitch - 5, -89, 89) end,
         function() S.AAHeadPitch = math.clamp(S.AAHeadPitch + 5, -89, 89) end)
-    createValueRow(right, "Head Roll°", function() return S.AAHeadRoll end,
+    createValueRow(right, "Head Roll", function() return S.AAHeadRoll end,
         function() S.AAHeadRoll = math.clamp(S.AAHeadRoll - 5, -89, 89) end,
         function() S.AAHeadRoll = math.clamp(S.AAHeadRoll + 5, -89, 89) end)
 
-    createLabel(right, "▸ PITCH ANTI-AIM")
+    createSection(right, "Pitch Anti-Aim")
     local pitchBtn
     pitchBtn = createTextButton(right, "Pitch Mode: " .. S.AAPitchMode, function()
         local modes = { "Off", "Down", "Up", "Flip" }
@@ -1128,9 +1235,9 @@ do
         idx = idx % #modes + 1
         S.AAPitchMode = modes[idx]
         pitchBtn.Text = "Pitch Mode: " .. S.AAPitchMode
-    end, Color3.fromRGB(60, 20, 20))
+    end, Theme.PanelBg)
 
-    createValueRow(right, "Pitch Angle°", function() return S.AAPitchAngle end,
+    createValueRow(right, "Pitch Angle", function() return S.AAPitchAngle end,
         function() S.AAPitchAngle = math.clamp(S.AAPitchAngle - 5, 30, 89) end,
         function() S.AAPitchAngle = math.clamp(S.AAPitchAngle + 5, 30, 89) end)
 
@@ -1142,15 +1249,15 @@ end
 -- CAMERA TAB
 do
     local left, right = CamTab.makeColumns()
-    createLabel(left, "▸ CAMERA")
+    createSection(left, "Camera")
     createBindableToggle(left, "Third Person", "ThirdPerson")
     createBindableToggle(left, "Hide Arms/Weapon", "ThirdPersonHideArms")
 
-    createLabel(left, "▸ TP SYSTEMS")
+    createSection(left, "TP Systems")
     createBindableToggle(left, "Wall Collision", "ThirdPersonWallCheck")
     createBindableToggle(left, "Smooth Follow", "ThirdPersonSmooth")
 
-    createLabel(right, "▸ TP TUNING")
+    createSection(right, "TP Tuning")
     createValueRow(right, "TP Distance", function() return S.ThirdPersonDistance end,
         function() S.ThirdPersonDistance = math.clamp(S.ThirdPersonDistance - 1, 4, 40) end,
         function() S.ThirdPersonDistance = math.clamp(S.ThirdPersonDistance + 1, 4, 40) end)
@@ -1168,10 +1275,10 @@ end
 -- TRACERS TAB
 do
     local left, right = TracerTab.makeColumns()
-    createLabel(left, "▸ BULLET TRACERS")
+    createSection(left, "Bullet Tracers")
     createBindableToggle(left, "Enable Tracers", "Tracers")
 
-    createLabel(right, "▸ SETTINGS")
+    createSection(right, "Settings")
     createValueRow(right, "Lifetime (sec)", function() return S.TracerLifetime end,
         function() S.TracerLifetime = math.clamp(S.TracerLifetime - 1, 0, 15) end,
         function() S.TracerLifetime = math.clamp(S.TracerLifetime + 1, 0, 15) end)
@@ -1182,12 +1289,12 @@ do
         function(c) S.TracerColor = c end)
 end
 
--- CURRENCY TAB (NEW)
+-- CURRENCY TAB
 do
     local left, right = CurrencyTab.makeColumns()
 
-    createLabel(left, "▸ REMOTE SCANNER")
-    createTextButton(left, "🔍 Scan All Remotes", function()
+    createSection(left, "Remote Scanner")
+    createTextButton(left, "[ * ] Scan All Remotes", function()
         print("========================================")
         print("=== REMOTE SCANNER ===")
         local results = {}
@@ -1199,9 +1306,9 @@ do
         end
         print(string.format("Total remotes found: %d", #results))
         print("========================================")
-    end, Color3.fromRGB(0, 80, 120))
+    end, Theme.PanelBg)
 
-    createTextButton(left, "🎯 Scan Money-Related Only", function()
+    createTextButton(left, "[ $ ] Scan Money-Related", function()
         print("========================================")
         print("=== MONEY-RELATED REMOTES ===")
         local keywords = { "cash", "money", "coin", "reward", "buy", "purchase", "claim", "earn", "shop", "sell", "credit", "gem", "gold", "point" }
@@ -1220,44 +1327,44 @@ do
         end
         print(string.format("Money-related remotes: %d", count))
         print("========================================")
-    end, Color3.fromRGB(0, 100, 60))
+    end, Theme.PanelBg)
 
-    createLabel(left, "▸ TARGET")
+    createSection(left, "Target")
     local targetBox = Instance.new("TextBox")
-    targetBox.Size = UDim2.new(1, 0, 0, 28)
-    targetBox.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    targetBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    targetBox.Size = UDim2.new(1, 0, 0, 24)
+    targetBox.BackgroundColor3 = Theme.RowBg
+    targetBox.TextColor3 = Theme.Text
     targetBox.PlaceholderText = "Full path of remote..."
-    targetBox.PlaceholderColor3 = Color3.fromRGB(120, 120, 120)
-    targetBox.Font = Enum.Font.Gotham
+    targetBox.PlaceholderColor3 = Theme.TextDim
+    targetBox.Font = Theme.Font
     targetBox.TextSize = 11
     targetBox.Text = S.CurrencyTargetPath
     targetBox.ClearTextOnFocus = false
     targetBox.Parent = left
-    Instance.new("UICorner", targetBox).CornerRadius = UDim.new(0, 6)
+    stroke(targetBox, Theme.Border, 1)
     targetBox:GetPropertyChangedSignal("Text"):Connect(function()
         S.CurrencyTargetPath = targetBox.Text
     end)
 
-    createLabel(left, "▸ ARGUMENTS")
+    createSection(left, "Arguments")
     local argsBox = Instance.new("TextBox")
-    argsBox.Size = UDim2.new(1, 0, 0, 28)
-    argsBox.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    argsBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    argsBox.Size = UDim2.new(1, 0, 0, 24)
+    argsBox.BackgroundColor3 = Theme.RowBg
+    argsBox.TextColor3 = Theme.Text
     argsBox.PlaceholderText = "1, 100, \"text\", true..."
-    argsBox.PlaceholderColor3 = Color3.fromRGB(120, 120, 120)
-    argsBox.Font = Enum.Font.Gotham
+    argsBox.PlaceholderColor3 = Theme.TextDim
+    argsBox.Font = Theme.Font
     argsBox.TextSize = 11
     argsBox.Text = S.CurrencyArgs
     argsBox.ClearTextOnFocus = false
     argsBox.Parent = left
-    Instance.new("UICorner", argsBox).CornerRadius = UDim.new(0, 6)
+    stroke(argsBox, Theme.Border, 1)
     argsBox:GetPropertyChangedSignal("Text"):Connect(function()
         S.CurrencyArgs = argsBox.Text
     end)
 
-    createLabel(left, "▸ MANUAL FIRE")
-    createTextButton(left, "🔥 Fire Once", function()
+    createSection(left, "Manual Fire")
+    createTextButton(left, "[ > ] Fire Once", function()
         local path = S.CurrencyTargetPath
         if not path or path == "" then
             warn("[Currency] No target path set")
@@ -1279,7 +1386,6 @@ do
             warn("[Currency] Remote not found:", path)
             return
         end
-        -- Parse args
         local args = {}
         if S.CurrencyArgs and S.CurrencyArgs ~= "" then
             local fn = loadstring("return {" .. S.CurrencyArgs .. "}")
@@ -1290,7 +1396,6 @@ do
                 end
             end
         end
-        -- Fire
         local success = pcall(function()
             if remote:IsA("RemoteEvent") then
                 remote:FireServer(table.unpack(args))
@@ -1299,81 +1404,80 @@ do
             end
         end)
         print("[Currency] Fired", remote:GetFullName(), success and "OK" or "FAILED")
-    end, Color3.fromRGB(120, 0, 0))
+    end, Theme.PanelBg)
 
-    createLabel(right, "▸ AUTO FIRE")
+    createSection(right, "Auto Fire")
     createBindableToggle(right, "Auto Fire Loop", "CurrencyAutoFire")
 
     createValueRow(right, "Fire Rate/sec", function() return S.CurrencyFireRate end,
         function() S.CurrencyFireRate = math.clamp(S.CurrencyFireRate - 5, 1, 100) end,
         function() S.CurrencyFireRate = math.clamp(S.CurrencyFireRate + 5, 1, 100) end)
 
-    createTextButton(right, "🛑 Stop All", function()
+    createTextButton(right, "[ X ] Stop All", function()
         S.CurrencyAutoFire = false
         print("[Currency] Auto-fire stopped")
-    end, Color3.fromRGB(120, 0, 0))
+    end, Theme.PanelBg)
 
-    createLabel(right, "▸ INFO")
-    createLabel(right, "1. Scan remotes → see list")
-    createLabel(right, "2. Copy full path of remote")
-    createLabel(right, "3. Paste path in Target box")
-    createLabel(right, "4. Add args (or leave empty)")
+    createSection(right, "Info")
+    createLabel(right, "1. Scan remotes")
+    createLabel(right, "2. Copy full path")
+    createLabel(right, "3. Paste in Target")
+    createLabel(right, "4. Add args (optional)")
     createLabel(right, "5. Fire Once to test")
     createLabel(right, "6. Auto Fire to spam")
 
-    createLabel(right, "▸ WARNING")
-    createLabel(right, "This only works on games")
-    createLabel(right, "with no server validation")
-    createLabel(right, "or rate limiting.")
+    createSection(right, "Warning")
+    createLabel(right, "Only works on games with no")
+    createLabel(right, "server validation / rate limit.")
 end
 
 -- CONFIGS TAB
 do
     local left, right = ConfigTab.makeColumns()
 
-    createLabel(left, "▸ CONFIG NAME")
+    createSection(left, "Config Name")
     local nameBox = Instance.new("TextBox")
-    nameBox.Size = UDim2.new(1, 0, 0, 30)
-    nameBox.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    nameBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    nameBox.Size = UDim2.new(1, 0, 0, 24)
+    nameBox.BackgroundColor3 = Theme.RowBg
+    nameBox.TextColor3 = Theme.Text
     nameBox.PlaceholderText = "Enter config name..."
-    nameBox.PlaceholderColor3 = Color3.fromRGB(120, 120, 120)
-    nameBox.Font = Enum.Font.Gotham
-    nameBox.TextSize = 12
+    nameBox.PlaceholderColor3 = Theme.TextDim
+    nameBox.Font = Theme.Font
+    nameBox.TextSize = 11
     nameBox.Text = ""
     nameBox.ClearTextOnFocus = false
     nameBox.Parent = left
-    Instance.new("UICorner", nameBox).CornerRadius = UDim.new(0, 6)
+    stroke(nameBox, Theme.Border, 1)
 
-    createLabel(left, "▸ ACTIONS")
-    createTextButton(left, "Create New Config", function()
+    createSection(left, "Actions")
+    createTextButton(left, "[ + ] Create New", function()
         local n = nameBox.Text
         if n and n ~= "" then
             createConfig(n)
             if ConfigUI.refreshList then ConfigUI.refreshList() end
             nameBox.Text = ""
         end
-    end, Color3.fromRGB(0, 100, 0))
+    end, Theme.PanelBg)
 
-    createTextButton(left, "Save Current To Config", function()
+    createTextButton(left, "[ S ] Save Current", function()
         local n = nameBox.Text
         if n and n ~= "" then
             saveCurrentToConfig(n)
             if ConfigUI.refreshList then ConfigUI.refreshList() end
             nameBox.Text = ""
         end
-    end, Color3.fromRGB(100, 80, 0))
+    end, Theme.PanelBg)
 
-    createTextButton(left, "Load Config", function()
+    createTextButton(left, "[ L ] Load", function()
         local n = nameBox.Text
         if n and n ~= "" and Configs[n] then
             loadConfig(n)
             SelectedConfig = n
             if ConfigUI.refreshAll then ConfigUI.refreshAll() end
         end
-    end, Color3.fromRGB(0, 80, 120))
+    end, Theme.PanelBg)
 
-    createTextButton(left, "Delete Config", function()
+    createTextButton(left, "[ - ] Delete", function()
         local n = nameBox.Text
         if n and n ~= "" then
             deleteConfig(n)
@@ -1381,20 +1485,20 @@ do
             if ConfigUI.refreshList then ConfigUI.refreshList() end
             nameBox.Text = ""
         end
-    end, Color3.fromRGB(120, 0, 0))
+    end, Theme.PanelBg)
 
-    createLabel(left, "▸ DEBUG")
-    createTextButton(left, "Inspect Players (Console)", function()
+    createSection(left, "Debug")
+    createTextButton(left, "[ i ] Inspect Players", function()
         inspectAllPlayers()
-    end, Color3.fromRGB(80, 80, 120))
+    end, Theme.PanelBg)
 
-    createLabel(right, "▸ SAVED CONFIGS")
+    createSection(right, "Saved Configs")
     local configListFrame = Instance.new("Frame")
-    configListFrame.Size = UDim2.new(1, 0, 0, 380)
-    configListFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    configListFrame.Size = UDim2.new(1, 0, 0, 400)
+    configListFrame.BackgroundColor3 = Theme.RowBg
     configListFrame.BorderSizePixel = 0
     configListFrame.Parent = right
-    Instance.new("UICorner", configListFrame).CornerRadius = UDim.new(0, 6)
+    stroke(configListFrame, Theme.Border, 1)
 
     local listScroll = Instance.new("ScrollingFrame")
     listScroll.Size = UDim2.new(1, -10, 1, -10)
@@ -1402,22 +1506,15 @@ do
     listScroll.BackgroundTransparency = 1
     listScroll.BorderSizePixel = 0
     listScroll.ScrollBarThickness = 4
-    listScroll.ScrollBarImageColor3 = Color3.fromRGB(180, 0, 0)
+    listScroll.ScrollBarImageColor3 = Theme.BorderBright
     listScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
     listScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
     listScroll.Parent = configListFrame
 
     local listLayout = Instance.new("UIListLayout")
     listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    listLayout.Padding = UDim.new(0, 4)
+    listLayout.Padding = UDim.new(0, 2)
     listLayout.Parent = listScroll
-
-    local listPad = Instance.new("UIPadding")
-    listPad.PaddingLeft = UDim.new(0, 5)
-    listPad.PaddingRight = UDim.new(0, 5)
-    listPad.PaddingTop = UDim.new(0, 5)
-    listPad.PaddingBottom = UDim.new(0, 5)
-    listPad.Parent = listScroll
 
     local function refreshConfigList()
         for _, c in ipairs(listScroll:GetChildren()) do
@@ -1427,18 +1524,16 @@ do
         for name, _ in pairs(Configs) do
             count = count + 1
             local row = Instance.new("TextButton")
-            row.Size = UDim2.new(1, 0, 0, 32)
-            row.BackgroundColor3 = SelectedConfig == name and Color3.fromRGB(40, 0, 0) or Color3.fromRGB(25, 25, 25)
-            row.Text = name .. (SelectedConfig == name and "  ✔" or "")
-            row.TextColor3 = SelectedConfig == name and Color3.fromRGB(255, 100, 100) or Color3.fromRGB(220, 220, 220)
-            row.Font = Enum.Font.GothamBold
-            row.TextSize = 12
+            row.Size = UDim2.new(1, 0, 0, 26)
+            row.BackgroundColor3 = (SelectedConfig == name) and Theme.AccentDim or Theme.PanelBg
+            row.Text = (SelectedConfig == name) and ("  > " .. name) or ("    " .. name)
+            row.TextColor3 = (SelectedConfig == name) and Theme.TextBright or Theme.Text
+            row.Font = Theme.Font
+            row.TextSize = 11
             row.TextXAlignment = Enum.TextXAlignment.Left
+            row.AutoButtonColor = false
             row.Parent = listScroll
-            Instance.new("UICorner", row).CornerRadius = UDim.new(0, 5)
-            local pad = Instance.new("UIPadding")
-            pad.PaddingLeft = UDim.new(0, 10)
-            pad.Parent = row
+            stroke(row, Theme.Border, 1)
             row.MouseButton1Click:Connect(function()
                 if SelectedConfig == name then
                     loadConfig(name)
@@ -1452,13 +1547,12 @@ do
         end
         if count == 0 then
             local empty = Instance.new("TextLabel")
-            empty.Size = UDim2.new(1, 0, 0, 50)
+            empty.Size = UDim2.new(1, 0, 0, 40)
             empty.BackgroundTransparency = 1
-            empty.Text = "No configs yet."
-            empty.TextColor3 = Color3.fromRGB(120, 120, 120)
-            empty.Font = Enum.Font.Gotham
-            empty.TextSize = 12
-            empty.TextWrapped = true
+            empty.Text = "no configs yet"
+            empty.TextColor3 = Theme.TextDim
+            empty.Font = Theme.Font
+            empty.TextSize = 11
             empty.Parent = listScroll
         end
     end
@@ -1470,12 +1564,13 @@ end
 -- Open RAGE tab
 for _, t in pairs(Tabs) do
     t.Page.Visible = false
-    t.Button.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    t.Button.TextColor3 = Color3.fromRGB(200, 200, 200)
+    t.Button.BackgroundColor3 = Theme.PanelBgAlt
+    t.Button.TextColor3 = Theme.TextDim
 end
 Tabs["RAGE"].Page.Visible = true
-Tabs["RAGE"].Button.BackgroundColor3 = Color3.fromRGB(130, 0, 0)
-Tabs["RAGE"].Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+Tabs["RAGE"].Button.BackgroundColor3 = Theme.Bg
+Tabs["RAGE"].Button.TextColor3 = Theme.TextBright
+Tabs["RAGE"].Stroke.Color = Theme.Accent
 
 ConfigUI.refreshAll = function()
     for _, refreshFn in ipairs(UIWidgets) do
@@ -1977,7 +2072,7 @@ local function createBox()
     f.Visible = false
     f.Parent = ESPFolder
     local s = Instance.new("UIStroke")
-    s.Thickness = 1.5
+    s.Thickness = 1
     s.Parent = f
     return f
 end
@@ -2411,8 +2506,8 @@ fovCircle.Visible = false
 fovCircle.Parent = gui
 Instance.new("UICorner", fovCircle).CornerRadius = UDim.new(1, 0)
 local cs = Instance.new("UIStroke")
-cs.Thickness = 1.5
-cs.Color = Color3.fromRGB(255, 50, 50)
+cs.Thickness = 1
+cs.Color = Theme.Accent
 cs.Parent = fovCircle
 
 -- ============================================================
