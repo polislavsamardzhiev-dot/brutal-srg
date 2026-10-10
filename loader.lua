@@ -1,3 +1,4 @@
+-- BrutalSRG private loader
 local TOKEN  = "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"
 local USER   = "polislavsamardzhiev-dot"
 local REPO   = "brutal-srg"
@@ -9,9 +10,12 @@ local url = string.format(
     USER, REPO, BRANCH, FILE, TOKEN
 )
 
+warn("[Loader] Fetching: " .. url:sub(1, 80) .. "...")
+
 local ok, err = pcall(function()
     local src = game:HttpGet(url)
-    if src:sub(1, 3) == "404" then error("keycheck.lua not found — check URL/token") end
+    if src:sub(1, 3) == "404" then error("keycheck.lua 404 — check URL/token") end
+    warn("[Loader] Fetched, length: " .. #src)
     local fn = loadstring(src)
     if not fn then error("compile failed") end
     fn()
