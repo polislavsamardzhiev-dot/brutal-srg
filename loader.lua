@@ -1,6 +1,6 @@
 -- BrutalSRG private loader
 local TOKEN  = "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"
-local USER   = "polisavsamardzhiev-dot"
+local USER   = "polislavsamardzhiev-dot"
 local REPO   = "brutal-srg"
 local BRANCH = "main"
 local FILE   = "keycheck.lua"
