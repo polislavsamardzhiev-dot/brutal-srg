@@ -1,20 +1,16 @@
--- BrutalSRG private loader
-local TOKEN  = "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"
+-- BrutalSRG loader (public repo — no token needed)
 local USER   = "polislavsamardzhiev-dot"
 local REPO   = "brutal-srg"
 local BRANCH = "main"
 local FILE   = "keycheck.lua"
 
-local url = string.format(
-    "https://raw.githubusercontent.com/%s/%s/%s/%s?token=%s",
-    USER, REPO, BRANCH, FILE, TOKEN
-)
+local url = "https://raw.githubusercontent.com/" .. USER .. "/" .. REPO .. "/" .. BRANCH .. "/" .. FILE
 
-warn("[Loader] Fetching: " .. url:sub(1, 80) .. "...")
+warn("[Loader] Fetching: " .. url)
 
 local ok, err = pcall(function()
     local src = game:HttpGet(url)
-    if src:sub(1, 3) == "404" then error("keycheck.lua 404 — check URL/token") end
+    if src:sub(1, 3) == "404" then error("keycheck.lua 404") end
     warn("[Loader] Fetched, length: " .. #src)
     local fn = loadstring(src)
     if not fn then error("compile failed") end
