@@ -95,25 +95,18 @@ Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
 -- VALIDATION + LOAD
 -- ============================================================
 local function loadMain()
-    warn("[BrutalSRG] Fetching main script from: " .. MAIN_URL:sub(1, 120) .. "...")
-
+    warn("[KeyCheck] Fetching main: " .. MAIN_URL:sub(1, 80) .. "...")
     local ok, err = pcall(function()
         local src = game:HttpGet(MAIN_URL)
-        warn("[BrutalSRG] Fetched, length: " .. #src)
-        warn("[BrutalSRG] First 60 chars: " .. src:sub(1, 60))
-
-        if src:sub(1, 3) == "404" then
-            error("main.lua not found (404). Check the URL/token in keycheck.lua.")
-        end
-
+        warn("[KeyCheck] Fetched, length: " .. #src)
+        if src:sub(1, 3) == "404" then error("main.lua 404 — check URL/token") end
         local fn = loadstring(src)
-        if not fn then error("Failed to compile main script") end
+        if not fn then error("compile failed") end
         fn()
     end)
-
     if not ok then
         warn("[BrutalSRG] Main script error: " .. tostring(err))
-        status.Text = "✖ Load failed (see console F9)"
+        status.Text = "✖ Load failed (check F9)"
         status.TextColor3 = Color3.fromRGB(255, 80, 80)
     end
 end
