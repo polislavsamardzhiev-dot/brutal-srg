@@ -4,7 +4,7 @@ local REPO   = "brutal-srg"
 local BRANCH = "main"
 local FILE   = "keycheck.lua"
 
-local url = "https://raw.githubusercontent.com/" .. USER .. "/" .. REPO .. "/" .. BRANCH .. "/" .. FILE
+local url = "https://raw.githubusercontent.com/" .. USER .. "/" .. REPO .. "/" .. BRANCH .. "/" .. FILE .. "?v=" .. tostring(os.time())
 
 warn("[Loader] Fetching: " .. url)
 
