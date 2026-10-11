@@ -1,4 +1,4 @@
--- BrutalSRGroblox - Custom Rig + Rage + Movement + Fly + Anti-Aim + Pitch + TP + Currency
+-- BrutalSRGroblox - Custom Rig + Rage + Movement + Fly + Anti-Aim + Pitch + TP + Currency + Kill Aura
 -- Works on: Solara, Xeno, Krnl, Fluxus, Delta, Codex, Wave
 
 -- ============================================================
@@ -99,6 +99,20 @@ local S = {
     RageLockFrames = 2,
     RageAdaptiveLead = true,
 
+    -- ============================================================
+    -- KILL AURA
+    -- ============================================================
+    KillAura = false,
+    KillAuraRadius = 15,
+    KillAuraHitDelay = 0.15,
+    KillAuraRotate = true,
+    KillAuraUseTool = true,
+    KillAuraUseRemote = true,
+    KillAuraRemotePath = "",
+    KillAuraRequireLOS = false,
+    KillAuraMaxTargets = 8,
+    KillAuraVisualize = true,
+
     SilentAim = false,
     SilentAimFOV = 360,
     SilentAimHitbox = "Head",
@@ -133,10 +147,11 @@ local Binds = {
     AntiAim = nil, AASpinBody = nil, AASpinHead = nil, AAJitter = nil,
     ThirdPersonWallCheck = nil, ThirdPersonSmooth = nil,
     CurrencyAutoFire = nil,
+    KillAura = nil,
 }
 
 -- ============================================================
--- THEME (modern red/black)
+-- THEME
 -- ============================================================
 local Theme = {
     Bg           = Color3.fromRGB(17, 17, 20),
@@ -334,6 +349,11 @@ local function isSameTeam(plr)
     return myTeam == theirTeam
 end
 
+local function hasForceField(model)
+    if not model then return false end
+    return model:FindFirstChildOfClass("ForceField") ~= nil
+end
+
 local function isValidCharacter(model, plr)
     if not model or not model:IsA("Model") then return false end
     if model == getCharacter(LP) then return false end
@@ -378,6 +398,257 @@ local function inspectAllPlayers()
 end
 
 if getgenv then getgenv().InspectPlayers = inspectAllPlayers end
+
+-- ============================================================
+-- KILL AURA CORE
+-- ============================================================
+local KillAura = {
+    LastHitPerTarget = {},     -- [model] = tick()
+    HitCount = 0,
+    LastError = nil,
+}
+
+-- Try to auto-detect common attack remotes in ReplicatedStorage
+local function findAttackRemotes()
+    local remotes = {}
+    local keywords = {
+        "attack", "hit", "damage", "swing", "strike", "melee",
+        "combat", "slash", "punch", "kick", "shoot", "fire",
+        "weapon", "tool", "use", "action", "click", "m1",
+    }
+    local function scan(container)
+        for _, obj in ipairs(container:GetDescendants()) do
+            if obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction") then
+                local lower = obj.Name:lower()
+                for _, kw in ipairs(keywords) do
+                    if lower:find(kw, 1, true) then
+                        table.insert(remotes, obj)
+                        break
+                    end
+                end
+            end
+        end
+    end
+    pcall(function() scan(RS) end)
+    pcall(function() scan(LP:WaitForChild("PlayerScripts", 2)) end)
+    pcall(function() scan(LP:FindFirstChild("PlayerGui") or Instance.new("Folder")) end)
+    return remotes
+end
+
+-- Try to fire any viable attack remote with the target
+local function tryFireRemotes(targetModel, targetPart)
+    if not S.KillAuraUseRemote then return false end
+
+    -- If user specified a manual path, use that first
+    if S.KillAuraRemotePath and S.KillAuraRemotePath ~= "" then
+        local path = S.KillAuraRemotePath
+        for _, obj in ipairs(game:GetDescendants()) do
+            if (obj:IsA("RemoteEvent") or obj:IsA("RemoteFunction"))
+                and (obj:GetFullName() == path or obj.Name == path) then
+                local ok = pcall(function()
+                    if obj:IsA("RemoteEvent") then
+                        obj:FireServer(targetModel)
+                    else
+                        obj:InvokeServer(targetModel)
+                    end
+                end)
+                if ok then return true end
+            end
+        end
+    end
+
+    -- Try common argument shapes
+    local char = LP.Character
+    local hum = char and char:FindFirstChildOfClass("Humanoid")
+    local tool = char and char:FindFirstChildOfClass("Tool")
+
+    local candidateArgs = {
+        { targetModel },
+        { targetPart },
+        { targetModel, targetPart },
+        { hum },
+        { hum, targetModel },
+        { targetModel.Name },
+        { targetModel.Name, targetPart },
+        { targetPart, tool },
+        { tool, targetModel },
+    }
+
+    local remotes = findAttackRemotes()
+    for _, remote in ipairs(remotes) do
+        for _, args in ipairs(candidateArgs) do
+            local ok = pcall(function()
+                if remote:IsA("RemoteEvent") then
+                    remote:FireServer(table.unpack(args))
+                else
+                    remote:InvokeServer(table.unpack(args))
+                end
+            end)
+            if ok then return true end
+        end
+    end
+    return false
+end
+
+-- Fire the currently held tool (weapon) at the target
+local function tryToolActivate(targetModel)
+    if not S.KillAuraUseTool then return false end
+    local char = LP.Character
+    if not char then return false end
+    local tool = char:FindFirstChildOfClass("Tool")
+    if not tool then return false end
+    local ok = pcall(function() tool:Activate() end)
+    return ok
+end
+
+-- Rotate character/camera to face target (bypasses directional checks)
+local function faceTarget(targetModel, targetPart)
+    if not S.KillAuraRotate then return end
+    local myChar = LP.Character
+    if not myChar then return end
+    local myRoot = myChar:FindFirstChild("HumanoidRootPart")
+    local targetRoot = targetPart or (targetModel and targetModel:FindFirstChild("HumanoidRootPart"))
+    if not myRoot or not targetRoot then return end
+    pcall(function()
+        local look = CFrame.lookAt(myRoot.Position, Vector3.new(targetRoot.Position.X, myRoot.Position.Y, targetRoot.Position.Z))
+        myRoot.CFrame = look
+    end)
+end
+
+-- Single hit attempt against one target
+local function killAuraHit(targetModel, targetPlr)
+    local targetPart = targetModel:FindFirstChild("Head")
+        or targetModel:FindFirstChild("UpperTorso")
+        or targetModel:FindFirstChild("Torso")
+        or targetModel:FindFirstChild("HumanoidRootPart")
+    if not targetPart then return false end
+
+    -- Optional wall check
+    if S.KillAuraRequireLOS and S.RageWallCheck then
+        local myChar = LP.Character
+        local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+        if myRoot then
+            local rp = RaycastParams.new()
+            rp.FilterType = Enum.RaycastFilterType.Exclude
+            rp.FilterDescendantsInstances = { myChar, Cam, targetModel }
+            rp.IgnoreWater = true
+            local hit = workspace:Raycast(myRoot.Position, targetPart.Position - myRoot.Position, rp)
+            if hit then return false end
+        end
+    end
+
+    -- Face the target first
+    faceTarget(targetModel, targetPart)
+
+    -- Try remote first, then tool
+    local didAttack = false
+    if S.KillAuraUseRemote then
+        didAttack = tryFireRemotes(targetModel, targetPart)
+    end
+    if not didAttack then
+        didAttack = tryToolActivate(targetModel)
+    end
+
+    if didAttack then
+        KillAura.LastHitPerTarget[targetModel] = tick()
+        KillAura.HitCount = KillAura.HitCount + 1
+        KillAura.LastError = nil
+        -- Draw a tracer to show the hit
+        if S.Tracers then
+            local myChar = LP.Character
+            local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+            if myRoot then
+                createTracer(myRoot.Position, targetPart.Position, S.TracerColor, S.TracerThickness)
+            end
+        end
+    else
+        KillAura.LastError = "no working remote/tool found"
+    end
+    return didAttack
+end
+
+-- Main kill aura loop
+local function killAuraStep()
+    if not S.KillAura then return end
+    local myChar = LP.Character
+    if not myChar then return end
+    local myRoot = myChar:FindFirstChild("HumanoidRootPart")
+    if not myRoot then return end
+    local myHum = myChar:FindFirstChildOfClass("Humanoid")
+    if not myHum or myHum.Health <= 0 then return end
+
+    local radius = S.KillAuraRadius
+    local radiusSq = radius * radius
+    local now = tick()
+    local hitDelay = S.KillAuraHitDelay
+    local hitsThisTick = 0
+
+    for _, entry in ipairs(targetData) do
+        if hitsThisTick >= S.KillAuraMaxTargets then break end
+        local m = entry.model
+        local p = entry.plr
+        if m and m.Parent and not isDead(m, p) and not hasForceField(m) then
+            local targetRoot = m:FindFirstChild("HumanoidRootPart")
+                or m:FindFirstChild("UpperTorso")
+                or m:FindFirstChild("Torso")
+            if targetRoot then
+                local delta = targetRoot.Position - myRoot.Position
+                local distSq = delta.X * delta.X + delta.Y * delta.Y + delta.Z * delta.Z
+                if distSq <= radiusSq then
+                    local last = KillAura.LastHitPerTarget[m] or 0
+                    if now - last >= hitDelay then
+                        killAuraHit(m, p)
+                        hitsThisTick = hitsThisTick + 1
+                    end
+                end
+            end
+        end
+    end
+
+    -- Cleanup stale entries
+    for model in pairs(KillAura.LastHitPerTarget) do
+        if not model.Parent or isDead(model) then
+            KillAura.LastHitPerTarget[model] = nil
+        end
+    end
+end
+
+-- Kill aura radius visualization
+local killAuraRing
+local function updateKillAuraRing()
+    if S.KillAuraVisualize and S.KillAura then
+        if not killAuraRing then
+            killAuraRing = Instance.new("SelectionSphere")
+            killAuraRing.Name = "BrutalKillAuraRing"
+            killAuraRing.Adornee = nil
+        end
+        local myChar = LP.Character
+        local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+        if myRoot then
+            killAuraRing.Adornee = myRoot
+            killAuraRing.Transparency = 0.85
+            killAuraRing.Color3 = Theme.Accent
+            killAuraRing.SurfaceTransparency = 0.85
+            killAuraRing.SurfaceColor3 = Theme.Accent
+            killAuraRing.Parent = gui
+        end
+    else
+        if killAuraRing then
+            pcall(function() killAuraRing:Destroy() end)
+            killAuraRing = nil
+        end
+    end
+end
+
+-- Expose for diagnostic
+if getgenv then
+    getgenv().KillAuraStats = function()
+        return {
+            hits = KillAura.HitCount,
+            lastError = KillAura.LastError,
+        }
+    end
+end
 
 -- ============================================================
 -- GUI
@@ -487,14 +758,11 @@ corner(Menu, 10)
 softShadow(Menu, 0.5, 16)
 stroke(Menu, Theme.BorderSoft, 1, 0.2)
 
--- UIScale
 local menuScale = Instance.new("UIScale")
 menuScale.Scale = (S.UIScale or 100) / 100
 menuScale.Parent = Menu
 
--- ============================================================
--- SIDE PANEL (left, with logo + tabs stacked vertically)
--- ============================================================
+-- SIDE PANEL
 local SidePanel = Instance.new("Frame")
 SidePanel.Size = UDim2.fromOffset(210, 720)
 SidePanel.BackgroundColor3 = Theme.SidePanel
@@ -502,7 +770,6 @@ SidePanel.BorderSizePixel = 0
 SidePanel.Parent = Menu
 corner(SidePanel, 10)
 
--- hide bottom-right corner of side panel by covering with a square
 local sideMask = Instance.new("Frame")
 sideMask.Size = UDim2.new(0, 10, 0, 10)
 sideMask.Position = UDim2.new(1, -10, 1, -10)
@@ -511,7 +778,6 @@ sideMask.BorderSizePixel = 0
 sideMask.ZIndex = 2
 sideMask.Parent = SidePanel
 
--- Logo area
 local Logo = Instance.new("Frame")
 Logo.Size = UDim2.new(1, 0, 0, 88)
 Logo.BackgroundColor3 = Theme.SidePanel
@@ -557,7 +823,6 @@ LogoSub.TextSize = 11
 LogoSub.TextXAlignment = Enum.TextXAlignment.Left
 LogoSub.Parent = Logo
 
--- Divider under logo
 local logoDivider = Instance.new("Frame")
 logoDivider.Size = UDim2.new(1, -24, 0, 1)
 logoDivider.Position = UDim2.fromOffset(12, 88)
@@ -565,7 +830,6 @@ logoDivider.BackgroundColor3 = Theme.Border
 logoDivider.BorderSizePixel = 0
 logoDivider.Parent = SidePanel
 
--- Tab container (vertical)
 local TabList = Instance.new("Frame")
 TabList.Size = UDim2.new(1, 0, 1, -170)
 TabList.Position = UDim2.fromOffset(0, 100)
@@ -584,7 +848,6 @@ TabListPad.PaddingRight = UDim.new(0, 10)
 TabListPad.PaddingTop = UDim.new(0, 6)
 TabListPad.Parent = TabList
 
--- Bottom user card
 local UserCard = Instance.new("Frame")
 UserCard.Size = UDim2.new(1, -20, 0, 56)
 UserCard.Position = UDim2.new(0, 10, 1, -66)
@@ -625,9 +888,7 @@ uexec.TextSize = 10
 uexec.TextXAlignment = Enum.TextXAlignment.Left
 uexec.Parent = UserCard
 
--- ============================================================
--- TOP BAR (right side)
--- ============================================================
+-- TOP BAR
 local TopBar = Instance.new("Frame")
 TopBar.Size = UDim2.new(1, -210, 0, 60)
 TopBar.Position = UDim2.fromOffset(210, 0)
@@ -658,14 +919,13 @@ local CurrentTabSub = Instance.new("TextLabel")
 CurrentTabSub.Size = UDim2.new(1, -180, 0, 16)
 CurrentTabSub.Position = UDim2.fromOffset(24, 34)
 CurrentTabSub.BackgroundTransparency = 1
-CurrentTabSub.Text = "rage aimbot · auto shoot · silent aim"
+CurrentTabSub.Text = "kill aura · rage aimbot · silent aim"
 CurrentTabSub.TextColor3 = Theme.TextDim
 CurrentTabSub.Font = Theme.Font
 CurrentTabSub.TextSize = 11
 CurrentTabSub.TextXAlignment = Enum.TextXAlignment.Left
 CurrentTabSub.Parent = TopBar
 
--- Close/hide button top right
 local HideBtn = Instance.new("TextButton")
 HideBtn.Size = UDim2.fromOffset(30, 30)
 HideBtn.Position = UDim2.new(1, -42, 0, 15)
@@ -682,7 +942,6 @@ HideBtn.MouseButton1Click:Connect(function() Menu.Visible = false end)
 HideBtn.MouseEnter:Connect(function() HideBtn.BackgroundColor3 = Theme.RowBgHover end)
 HideBtn.MouseLeave:Connect(function() HideBtn.BackgroundColor3 = Theme.CardBg end)
 
--- Divider line between top bar and content
 local topDivider = Instance.new("Frame")
 topDivider.Size = UDim2.new(1, -210, 0, 1)
 topDivider.Position = UDim2.fromOffset(210, 60)
@@ -692,9 +951,7 @@ topDivider.Parent = Menu
 
 makeDraggable(Menu, TopBar)
 
--- ============================================================
--- CONTENT AREA (right side, below top bar)
--- ============================================================
+-- CONTENT AREA
 local ContentArea = Instance.new("Frame")
 ContentArea.Size = UDim2.new(1, -210, 1, -60)
 ContentArea.Position = UDim2.fromOffset(210, 60)
@@ -705,7 +962,6 @@ ContentArea.Parent = Menu
 local Tabs = {}
 
 local function createTab(name, icon, subtitle)
-    -- Sidebar button
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, 0, 0, 38)
     btn.BackgroundColor3 = Theme.SidePanel
@@ -718,7 +974,6 @@ local function createTab(name, icon, subtitle)
     btn.Parent = TabList
     corner(btn, 6)
 
-    -- Left accent bar (visible when active)
     local bar = Instance.new("Frame")
     bar.Size = UDim2.new(0, 3, 0, 20)
     bar.Position = UDim2.new(0, 4, 0.5, -10)
@@ -729,7 +984,6 @@ local function createTab(name, icon, subtitle)
     bar.Parent = btn
     corner(bar, 2)
 
-    -- Icon
     local iconLbl = Instance.new("TextLabel")
     iconLbl.Size = UDim2.fromOffset(24, 24)
     iconLbl.Position = UDim2.fromOffset(16, 7)
@@ -741,7 +995,6 @@ local function createTab(name, icon, subtitle)
     iconLbl.ZIndex = 2
     iconLbl.Parent = btn
 
-    -- Label
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, -56, 1, 0)
     label.Position = UDim2.fromOffset(46, 0)
@@ -754,7 +1007,6 @@ local function createTab(name, icon, subtitle)
     label.ZIndex = 2
     label.Parent = btn
 
-    -- Page
     local page = Instance.new("ScrollingFrame")
     page.Size = UDim2.new(1, 0, 1, 0)
     page.BackgroundTransparency = 1
@@ -910,7 +1162,6 @@ local function createBindableToggle(parent, name, key)
     corner(row, 8)
     local rowStroke = stroke(row, Theme.Border, 1)
 
-    -- Left accent bar
     local bar = Instance.new("Frame")
     bar.Size = UDim2.new(0, 3, 0, 22)
     bar.Position = UDim2.new(0, 6, 0.5, -11)
@@ -931,7 +1182,6 @@ local function createBindableToggle(parent, name, key)
     toggleBtn.AutoButtonColor = false
     toggleBtn.Parent = row
 
-    -- Small "toggle switch"
     local switch = Instance.new("Frame")
     switch.Size = UDim2.fromOffset(34, 18)
     switch.Position = UDim2.new(1, -110, 0.5, -9)
@@ -1106,6 +1356,26 @@ local function createTextButton(parent, text, cb, bg)
         b.TextColor3 = Theme.Text
     end)
     return b
+end
+
+local function createTextBox(parent, placeholder, initialValue, onChange)
+    local box = Instance.new("TextBox")
+    box.Size = UDim2.new(1, 0, 0, 34)
+    box.BackgroundColor3 = Theme.RowBg
+    box.TextColor3 = Theme.Text
+    box.PlaceholderText = placeholder
+    box.PlaceholderColor3 = Theme.TextDim
+    box.Font = Theme.Font
+    box.TextSize = 12
+    box.Text = initialValue or ""
+    box.ClearTextOnFocus = false
+    box.Parent = parent
+    corner(box, 8)
+    stroke(box, Theme.Border, 1)
+    if onChange then
+        box:GetPropertyChangedSignal("Text"):Connect(function() onChange(box.Text) end)
+    end
+    return box
 end
 
 -- ============================================================
@@ -1342,7 +1612,7 @@ end
 -- ============================================================
 -- CREATE TABS
 -- ============================================================
-local RageTab = createTab("Rage", "✦", "rage aimbot · auto shoot · silent aim")
+local RageTab = createTab("Rage", "✦", "kill aura · rage aimbot · silent aim")
 local VisTab = createTab("Visuals", "◉", "esp · chams · skeleton · colors")
 local AimTab = createTab("Aim", "⊕", "aimbot · tuning · hitboxes")
 local MoveTab = createTab("Movement", "➤", "bhop · speed · fly · noclip")
@@ -1352,71 +1622,79 @@ local TracerTab = createTab("Tracers", "═", "bullet tracers")
 local CurrencyTab = createTab("Currency", "$", "remote scanner · auto fire")
 local ConfigTab = createTab("Configs", "⚙", "save and load settings")
 
--- RAGE TAB
+-- RAGE TAB (with KILL AURA section)
 do
     local left, right = RageTab.makeColumns()
-    createSection(left, "Rage Aimbot")
-    createBindableToggle(left, "Rage Aimbot", "RageAimbot")
-    createBindableToggle(left, "Auto Shoot (M1)", "RageAutoShoot")
-    createBindableToggle(left, "Wall Check", "RageWallCheck")
-    createBindableToggle(left, "Ignore Teammates", "IgnoreTeammates")
 
-    createSection(left, "Settings")
-    createValueRow(left, "Rage FOV", function() return S.RageFOV end,
+    createSection(left, "Kill Aura")
+    createBindableToggle(left, "Kill Aura", "KillAura")
+    createBindableToggle(left, "Rotate to Target", "KillAuraRotate")
+    createBindableToggle(left, "Use Remote", "KillAuraUseRemote")
+    createBindableToggle(left, "Use Tool Activate", "KillAuraUseTool")
+    createBindableToggle(left, "Wall Check (LOS)", "KillAuraRequireLOS")
+    createBindableToggle(left, "Show Radius Ring", "KillAuraVisualize")
+
+    createValueRow(left, "Radius (studs)", function() return S.KillAuraRadius end,
+        function() S.KillAuraRadius = math.clamp(S.KillAuraRadius - 1, 1, 100) end,
+        function() S.KillAuraRadius = math.clamp(S.KillAuraRadius + 1, 1, 100) end)
+    createValueRow(left, "Hit Delay (ms)", function() return math.floor(S.KillAuraHitDelay * 1000) end,
+        function() S.KillAuraHitDelay = math.clamp(S.KillAuraHitDelay - 0.01, 0.01, 2.0) end,
+        function() S.KillAuraHitDelay = math.clamp(S.KillAuraHitDelay + 0.01, 0.01, 2.0) end)
+    createValueRow(left, "Max Targets/Tick", function() return S.KillAuraMaxTargets end,
+        function() S.KillAuraMaxTargets = math.clamp(S.KillAuraMaxTargets - 1, 1, 30) end,
+        function() S.KillAuraMaxTargets = math.clamp(S.KillAuraMaxTargets + 1, 1, 30) end)
+
+    createSection(left, "Kill Aura Remote")
+    createTextBox(left, "manual remote path (optional)", S.KillAuraRemotePath, function(v)
+        S.KillAuraRemotePath = v
+    end)
+    createTextButton(left, "Scan Attack Remotes", function()
+        print("========================================")
+        print("=== ATTACK REMOTE SCAN ===")
+        local remotes = findAttackRemotes()
+        for _, r in ipairs(remotes) do
+            print("  " .. r.ClassName .. "  " .. r:GetFullName())
+        end
+        print("Total: " .. tostring(#remotes))
+        print("========================================")
+    end, Theme.CardBg)
+    createTextButton(left, "Kill Aura Stats", function()
+        local s = getgenv().KillAuraStats and getgenv().KillAuraStats() or {}
+        print("[KillAura] Hits:", s.hits or 0, "| Last error:", s.lastError or "none")
+    end, Theme.CardBg)
+
+    createSection(right, "Rage Aimbot")
+    createBindableToggle(right, "Rage Aimbot", "RageAimbot")
+    createBindableToggle(right, "Auto Shoot (M1)", "RageAutoShoot")
+    createBindableToggle(right, "Wall Check", "RageWallCheck")
+    createBindableToggle(right, "Ignore Teammates", "IgnoreTeammates")
+
+    createSection(right, "Rage Settings")
+    createValueRow(right, "Rage FOV", function() return S.RageFOV end,
         function() S.RageFOV = math.clamp(S.RageFOV - 10, 10, 360) end,
         function() S.RageFOV = math.clamp(S.RageFOV + 10, 10, 360) end)
-    createValueRow(left, "Max Distance", function() return S.RageMaxDistance end,
+    createValueRow(right, "Max Distance", function() return S.RageMaxDistance end,
         function() S.RageMaxDistance = math.clamp(S.RageMaxDistance - 25, 50, 2000) end,
         function() S.RageMaxDistance = math.clamp(S.RageMaxDistance + 25, 50, 2000) end)
-    createValueRow(left, "Shoot Delay", function() return math.floor(S.RageShootDelay * 1000) .. "ms" end,
+    createValueRow(right, "Shoot Delay", function() return math.floor(S.RageShootDelay * 1000) .. "ms" end,
         function() S.RageShootDelay = math.clamp(S.RageShootDelay - 0.01, 0.01, 1.0) end,
         function() S.RageShootDelay = math.clamp(S.RageShootDelay + 0.01, 0.01, 1.0) end)
-    createValueRow(left, "Fire Angle", function() return S.RageFireAngle .. "°" end,
+    createValueRow(right, "Fire Angle", function() return S.RageFireAngle .. "°" end,
         function() S.RageFireAngle = math.clamp(S.RageFireAngle - 0.5, 0.5, 30) end,
         function() S.RageFireAngle = math.clamp(S.RageFireAngle + 0.5, 0.5, 30) end)
-    createValueRow(left, "Lock Frames", function() return S.RageLockFrames end,
+    createValueRow(right, "Lock Frames", function() return S.RageLockFrames end,
         function() S.RageLockFrames = math.clamp(S.RageLockFrames - 1, 1, 10) end,
         function() S.RageLockFrames = math.clamp(S.RageLockFrames + 1, 1, 10) end)
-    createValueRow(left, "Prediction", function() return math.floor(S.RagePrediction * 1000) .. "ms" end,
-        function() S.RagePrediction = math.clamp(S.RagePrediction - 0.005, 0, 0.1) end,
-        function() S.RagePrediction = math.clamp(S.RagePrediction + 0.005, 0, 0.1) end)
-    createBindableToggle(left, "Adaptive Lead", "RageAdaptiveLead")
+    createBindableToggle(right, "Adaptive Lead", "RageAdaptiveLead")
 
     local rb
-    rb = createTextButton(left, "Hitbox: " .. S.RageHitbox, function()
+    rb = createTextButton(right, "Hitbox: " .. S.RageHitbox, function()
         local o = { "Head", "Torso", "Legs" }
         local i = 1
         for k, v in ipairs(o) do if v == S.RageHitbox then i = k break end end
         i = i % #o + 1
         S.RageHitbox = o[i]
         rb.Text = "Hitbox: " .. S.RageHitbox
-    end, Theme.CardBg)
-
-    createSection(right, "Silent Aim")
-    createBindableToggle(right, "Silent Aim", "SilentAim")
-    createValueRow(right, "SA FOV", function() return S.SilentAimFOV end,
-        function() S.SilentAimFOV = math.clamp(S.SilentAimFOV - 10, 10, 360) end,
-        function() S.SilentAimFOV = math.clamp(S.SilentAimFOV + 10, 10, 360) end)
-    createValueRow(right, "SA Angle", function() return S.SilentAimAngleThreshold .. "°" end,
-        function() S.SilentAimAngleThreshold = math.clamp(S.SilentAimAngleThreshold - 1, 1, 30) end,
-        function() S.SilentAimAngleThreshold = math.clamp(S.SilentAimAngleThreshold + 1, 1, 30) end)
-    createValueRow(right, "SA Settle", function() return math.floor(S.SilentAimSettle * 1000) .. "ms" end,
-        function() S.SilentAimSettle = math.clamp(S.SilentAimSettle - 0.01, 0, 0.2) end,
-        function() S.SilentAimSettle = math.clamp(S.SilentAimSettle + 0.01, 0, 0.2) end)
-
-    local saHB
-    saHB = createTextButton(right, "SA Hitbox: " .. S.SilentAimHitbox, function()
-        local o = { "Head", "Torso", "Legs" }
-        local i = 1
-        for k, v in ipairs(o) do if v == S.SilentAimHitbox then i = k break end end
-        i = i % #o + 1
-        S.SilentAimHitbox = o[i]
-        saHB.Text = "SA Hitbox: " .. S.SilentAimHitbox
-    end, Theme.CardBg)
-
-    createSection(right, "Diagnostic")
-    createTextButton(right, "Inspect All Players", function()
-        inspectAllPlayers()
     end, Theme.CardBg)
 end
 
@@ -1636,39 +1914,13 @@ do
     end, Theme.CardBg)
 
     createSection(left, "Target")
-    local targetBox = Instance.new("TextBox")
-    targetBox.Size = UDim2.new(1, 0, 0, 34)
-    targetBox.BackgroundColor3 = Theme.RowBg
-    targetBox.TextColor3 = Theme.Text
-    targetBox.PlaceholderText = "Full path of remote..."
-    targetBox.PlaceholderColor3 = Theme.TextDim
-    targetBox.Font = Theme.Font
-    targetBox.TextSize = 12
-    targetBox.Text = S.CurrencyTargetPath
-    targetBox.ClearTextOnFocus = false
-    targetBox.Parent = left
-    corner(targetBox, 8)
-    stroke(targetBox, Theme.Border, 1)
-    targetBox:GetPropertyChangedSignal("Text"):Connect(function()
-        S.CurrencyTargetPath = targetBox.Text
+    createTextBox(left, "Full path of remote...", S.CurrencyTargetPath, function(v)
+        S.CurrencyTargetPath = v
     end)
 
     createSection(left, "Arguments")
-    local argsBox = Instance.new("TextBox")
-    argsBox.Size = UDim2.new(1, 0, 0, 34)
-    argsBox.BackgroundColor3 = Theme.RowBg
-    argsBox.TextColor3 = Theme.Text
-    argsBox.PlaceholderText = "1, 100, \"text\", true..."
-    argsBox.PlaceholderColor3 = Theme.TextDim
-    argsBox.Font = Theme.Font
-    argsBox.TextSize = 12
-    argsBox.Text = S.CurrencyArgs
-    argsBox.ClearTextOnFocus = false
-    argsBox.Parent = left
-    corner(argsBox, 8)
-    stroke(argsBox, Theme.Border, 1)
-    argsBox:GetPropertyChangedSignal("Text"):Connect(function()
-        S.CurrencyArgs = argsBox.Text
+    createTextBox(left, "1, 100, \"text\", true...", S.CurrencyArgs, function(v)
+        S.CurrencyArgs = v
     end)
 
     createSection(left, "Manual Fire")
@@ -1725,18 +1977,6 @@ do
         S.CurrencyAutoFire = false
         print("[Currency] Auto-fire stopped")
     end, Theme.CardBg)
-
-    createSection(right, "How To")
-    createLabel(right, "1. Scan remotes")
-    createLabel(right, "2. Copy full path")
-    createLabel(right, "3. Paste into Target")
-    createLabel(right, "4. Add args (optional)")
-    createLabel(right, "5. Fire Once to test")
-    createLabel(right, "6. Enable Auto Fire")
-
-    createSection(right, "Warning")
-    createLabel(right, "Only works on games with no")
-    createLabel(right, "server validation or rate limit.")
 end
 
 -- CONFIGS TAB
@@ -2281,7 +2521,6 @@ end
 -- ============================================================
 -- CURRENCY AUTO-FIRE
 -- ============================================================
-local currencyConn = nil
 local currencyLastFire = 0
 
 local function fireCurrencyOnce()
@@ -2882,6 +3121,18 @@ RunService:BindToRenderStep("BrutalSRG_Render", Enum.RenderPriority.Camera.Value
     else aimStep() end
 end)
 
+-- Dedicated kill aura loop (Heartbeat = every physics frame)
+local killAuraConn = RunService.Heartbeat:Connect(function()
+    if S.KillAura then
+        pcall(killAuraStep)
+    end
+end)
+
+-- Kill aura ring updater
+local killAuraRingConn = RunService.Heartbeat:Connect(function()
+    pcall(updateKillAuraRing)
+end)
+
 local bhopConn = RunService.Stepped:Connect(function() bhopStep() end)
 
 local moveConn = RunService.Heartbeat:Connect(function()
@@ -2928,6 +3179,8 @@ if getgenv then
         pcall(function() flyBindConn:Disconnect() end)
         pcall(function() flyReleaseConn:Disconnect() end)
         pcall(function() renderConn:Disconnect() end)
+        pcall(function() killAuraConn:Disconnect() end)
+        pcall(function() killAuraRingConn:Disconnect() end)
         pcall(function() if tp.active then disableThirdPerson() end end)
         pcall(function() disableNoClip() end)
         pcall(function() disableFly() end)
@@ -2939,3 +3192,4 @@ print("=== BrutalSRGroblox loaded ===")
 print("Executor:", EXECUTOR_NAME)
 print("GUI parent:", parentName)
 print("INSERT = Toggle Menu")
+print("Kill Aura: Rage tab -> Kill Aura section")
