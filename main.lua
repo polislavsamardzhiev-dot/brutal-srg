@@ -99,9 +99,7 @@ local S = {
     RageLockFrames = 2,
     RageAdaptiveLead = true,
 
-    -- ============================================================
     -- KILL AURA
-    -- ============================================================
     KillAura = false,
     KillAuraRadius = 15,
     KillAuraHitDelay = 0.15,
@@ -403,12 +401,11 @@ if getgenv then getgenv().InspectPlayers = inspectAllPlayers end
 -- KILL AURA CORE
 -- ============================================================
 local KillAura = {
-    LastHitPerTarget = {},     -- [model] = tick()
+    LastHitPerTarget = {},
     HitCount = 0,
     LastError = nil,
 }
 
--- Try to auto-detect common attack remotes in ReplicatedStorage
 local function findAttackRemotes()
     local remotes = {}
     local keywords = {
@@ -431,15 +428,12 @@ local function findAttackRemotes()
     end
     pcall(function() scan(RS) end)
     pcall(function() scan(LP:WaitForChild("PlayerScripts", 2)) end)
-    pcall(function() scan(LP:FindFirstChild("PlayerGui") or Instance.new("Folder")) end)
     return remotes
 end
 
--- Try to fire any viable attack remote with the target
 local function tryFireRemotes(targetModel, targetPart)
     if not S.KillAuraUseRemote then return false end
 
-    -- If user specified a manual path, use that first
     if S.KillAuraRemotePath and S.KillAuraRemotePath ~= "" then
         local path = S.KillAuraRemotePath
         for _, obj in ipairs(game:GetDescendants()) do
@@ -457,7 +451,6 @@ local function tryFireRemotes(targetModel, targetPart)
         end
     end
 
-    -- Try common argument shapes
     local char = LP.Character
     local hum = char and char:FindFirstChildOfClass("Humanoid")
     local tool = char and char:FindFirstChildOfClass("Tool")
@@ -490,7 +483,6 @@ local function tryFireRemotes(targetModel, targetPart)
     return false
 end
 
--- Fire the currently held tool (weapon) at the target
 local function tryToolActivate(targetModel)
     if not S.KillAuraUseTool then return false end
     local char = LP.Character
@@ -501,7 +493,6 @@ local function tryToolActivate(targetModel)
     return ok
 end
 
--- Rotate character/camera to face target (bypasses directional checks)
 local function faceTarget(targetModel, targetPart)
     if not S.KillAuraRotate then return end
     local myChar = LP.Character
@@ -515,7 +506,6 @@ local function faceTarget(targetModel, targetPart)
     end)
 end
 
--- Single hit attempt against one target
 local function killAuraHit(targetModel, targetPlr)
     local targetPart = targetModel:FindFirstChild("Head")
         or targetModel:FindFirstChild("UpperTorso")
@@ -523,7 +513,6 @@ local function killAuraHit(targetModel, targetPlr)
         or targetModel:FindFirstChild("HumanoidRootPart")
     if not targetPart then return false end
 
-    -- Optional wall check
     if S.KillAuraRequireLOS and S.RageWallCheck then
         local myChar = LP.Character
         local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
@@ -537,10 +526,8 @@ local function killAuraHit(targetModel, targetPlr)
         end
     end
 
-    -- Face the target first
     faceTarget(targetModel, targetPart)
 
-    -- Try remote first, then tool
     local didAttack = false
     if S.KillAuraUseRemote then
         didAttack = tryFireRemotes(targetModel, targetPart)
@@ -553,7 +540,6 @@ local function killAuraHit(targetModel, targetPlr)
         KillAura.LastHitPerTarget[targetModel] = tick()
         KillAura.HitCount = KillAura.HitCount + 1
         KillAura.LastError = nil
-        -- Draw a tracer to show the hit
         if S.Tracers then
             local myChar = LP.Character
             local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
@@ -567,7 +553,6 @@ local function killAuraHit(targetModel, targetPlr)
     return didAttack
 end
 
--- Main kill aura loop
 local function killAuraStep()
     if not S.KillAura then return end
     local myChar = LP.Character
@@ -605,7 +590,6 @@ local function killAuraStep()
         end
     end
 
-    -- Cleanup stale entries
     for model in pairs(KillAura.LastHitPerTarget) do
         if not model.Parent or isDead(model) then
             KillAura.LastHitPerTarget[model] = nil
@@ -613,14 +597,12 @@ local function killAuraStep()
     end
 end
 
--- Kill aura radius visualization
 local killAuraRing
 local function updateKillAuraRing()
     if S.KillAuraVisualize and S.KillAura then
         if not killAuraRing then
             killAuraRing = Instance.new("SelectionSphere")
             killAuraRing.Name = "BrutalKillAuraRing"
-            killAuraRing.Adornee = nil
         end
         local myChar = LP.Character
         local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
@@ -640,7 +622,6 @@ local function updateKillAuraRing()
     end
 end
 
--- Expose for diagnostic
 if getgenv then
     getgenv().KillAuraStats = function()
         return {
@@ -1622,7 +1603,7 @@ local TracerTab = createTab("Tracers", "═", "bullet tracers")
 local CurrencyTab = createTab("Currency", "$", "remote scanner · auto fire")
 local ConfigTab = createTab("Configs", "⚙", "save and load settings")
 
--- RAGE TAB (with KILL AURA section)
+-- RAGE TAB
 do
     local left, right = RageTab.makeColumns()
 
@@ -1745,12 +1726,15 @@ do
         function() S.AimMaxDelta = math.clamp(S.AimMaxDelta + 5, 1, 200) end)
 end
 
--- MOVEMENT TAB
+-- MOVEMENT TAB (bhop speed slider added, walk 0-1000, fly 0-500)
 do
     local left, right = MoveTab.makeColumns()
     createSection(left, "Bhop")
     createBindableToggle(left, "BHOP (Hold Space)", "Bhop")
     createBindableToggle(left, "BHOP Speed Boost", "BhopSpeedBoost")
+    createValueRow(left, "BHOP Speed", function() return S.BhopSpeed end,
+        function() S.BhopSpeed = math.clamp(S.BhopSpeed - 1, 0, 100) end,
+        function() S.BhopSpeed = math.clamp(S.BhopSpeed + 1, 0, 100) end)
 
     createSection(left, "Exploits")
     createBindableToggle(left, "No-Clip", "NoClip")
@@ -1760,18 +1744,18 @@ do
 
     createSection(right, "Speed")
     createValueRow(right, "Walk Speed", function() return S.SpeedValue end,
-        function() S.SpeedValue = math.clamp(S.SpeedValue - 5, 16, 500) end,
-        function() S.SpeedValue = math.clamp(S.SpeedValue + 5, 16, 500) end)
+        function() S.SpeedValue = math.clamp(S.SpeedValue - 5, 0, 1000) end,
+        function() S.SpeedValue = math.clamp(S.SpeedValue + 5, 0, 1000) end)
 
     createSection(right, "Jump")
     createValueRow(right, "Jump Power", function() return S.JumpPowerValue end,
-        function() S.JumpPowerValue = math.clamp(S.JumpPowerValue - 10, 50, 500) end,
-        function() S.JumpPowerValue = math.clamp(S.JumpPowerValue + 10, 50, 500) end)
+        function() S.JumpPowerValue = math.clamp(S.JumpPowerValue - 10, 0, 500) end,
+        function() S.JumpPowerValue = math.clamp(S.JumpPowerValue + 10, 0, 500) end)
 
     createSection(right, "Fly")
     createValueRow(right, "Fly Speed", function() return S.FlySpeed end,
-        function() S.FlySpeed = math.clamp(S.FlySpeed - 5, 5, 300) end,
-        function() S.FlySpeed = math.clamp(S.FlySpeed + 5, 5, 300) end)
+        function() S.FlySpeed = math.clamp(S.FlySpeed - 5, 0, 500) end,
+        function() S.FlySpeed = math.clamp(S.FlySpeed + 5, 0, 500) end)
 end
 
 -- ANTI-AIM TAB
@@ -3121,14 +3105,12 @@ RunService:BindToRenderStep("BrutalSRG_Render", Enum.RenderPriority.Camera.Value
     else aimStep() end
 end)
 
--- Dedicated kill aura loop (Heartbeat = every physics frame)
 local killAuraConn = RunService.Heartbeat:Connect(function()
     if S.KillAura then
         pcall(killAuraStep)
     end
 end)
 
--- Kill aura ring updater
 local killAuraRingConn = RunService.Heartbeat:Connect(function()
     pcall(updateKillAuraRing)
 end)
@@ -3192,4 +3174,4 @@ print("=== BrutalSRGroblox loaded ===")
 print("Executor:", EXECUTOR_NAME)
 print("GUI parent:", parentName)
 print("INSERT = Toggle Menu")
-print("Kill Aura: Rage tab -> Kill Aura section")
+print("Kill Aura: Rage tab")
